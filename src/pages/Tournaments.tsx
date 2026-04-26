@@ -40,7 +40,7 @@ const Tournaments = () => {
     (async () => {
       const { data } = await supabase
         .from("registrations")
-        .select("tournament_id, tournaments(id, title, category, scheduled_at, status, room_id, room_password)")
+        .select("tournament_id, tournaments(id, title, category, scheduled_at, status, room_id, room_password, total_slots)")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       const baseList: JoinedMatch[] = (data ?? [])
