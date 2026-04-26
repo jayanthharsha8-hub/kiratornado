@@ -31,16 +31,14 @@ const WalletUpi = () => {
     if (coins < selected) { toast.error("Not enough coins. Earn more to withdraw."); return; }
     setBusy(true);
 
-    const newCoins = coins - selected;
-    const { error: upErr } = await supabase.from("profiles").update({ coins: newCoins }).eq("id", user.id);
-    if (upErr) { setBusy(false); toast.error(upErr.message); return; }
-
-    const { error } = await supabase.from("wallet_requests").insert({
-      user_id: user.id, type: "withdraw", amount: selected, withdraw_type: "upi", upi_id: upi.trim(),
+    const { error } = await (supabase.rpc as any)("request_withdrawal", {
+      _amount: selected,
+      _withdraw_type: "upi",
+      _upi_id: upi.trim(),
+      _upi_ref: null,
     });
     setBusy(false);
     if (error) {
-      await supabase.from("profiles").update({ coins }).eq("id", user.id);
       toast.error(error.message);
       return;
     }
