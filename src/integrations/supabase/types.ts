@@ -349,6 +349,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      join_tournament: { Args: { _tournament_id: string }; Returns: Json }
+      request_withdrawal: {
+        Args: {
+          _amount: number
+          _upi_id?: string
+          _upi_ref?: string
+          _withdraw_type: Database["public"]["Enums"]["withdraw_type"]
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "user"
