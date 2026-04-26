@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* KIRA TORNADO — Solo Leveling System UI design system. All HSL. */
+
+@layer base {
+  :root {
+    /* Solo Leveling system: pure black + neon cyan glow */
+    --background: 0 0% 0%;
+    --foreground: 210 40% 98%;
+
+    --card: 0 0% 4%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 60% 5%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 185 100% 50%;            /* neon cyan #00f0ff */
+    --primary-foreground: 0 0% 0%;
+    --primary-glow: 185 100% 60%;
+
+    --secondary: 217 90% 55%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 222 30% 12%;
+    --muted-foreground: 215 25% 70%;
+
+    --accent: 199 100% 60%;
+    --accent-foreground: 222 47% 6%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 199 80% 30%;
+    --input: 222 30% 10%;
+    --ring: 199 100% 60%;
+
+    --radius: 0.25rem;
+
+    --sidebar-background: 222 50% 5%;
+    --sidebar-foreground: 210 40% 95%;
+    --sidebar-primary: 199 100% 60%;
+    --sidebar-primary-foreground: 222 47% 6%;
+    --sidebar-accent: 222 30% 10%;
+    --sidebar-accent-foreground: 199 100% 70%;
+    --sidebar-border: 199 80% 25%;
+    --sidebar-ring: 199 100% 60%;
+
+    --gradient-glow: radial-gradient(circle at 50% 50%, hsl(199 100% 50% / 0.35), transparent 70%);
+    --gradient-panel: linear-gradient(180deg, hsl(222 60% 8% / 0.95), hsl(222 50% 4% / 0.95));
+    --shadow-glow: 0 0 24px hsl(199 100% 60% / 0.55), 0 0 48px hsl(199 100% 60% / 0.25);
+    --shadow-soft: 0 0 12px hsl(199 100% 60% / 0.35);
+  }
+
+  .dark { color-scheme: dark; }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html, body, #root { @apply min-h-screen; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Rajdhani', system-ui, sans-serif;
+    background-image:
+      radial-gradient(ellipse at top, hsl(199 100% 30% / 0.18), transparent 60%),
+      radial-gradient(ellipse at bottom, hsl(217 90% 25% / 0.15), transparent 60%);
+    background-attachment: fixed;
+  }
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Orbitron', system-ui, sans-serif;
+    letter-spacing: 0.02em;
+  }
+}
+
+@layer utilities {
+  .text-glow { text-shadow: 0 0 8px hsl(var(--primary) / 0.9), 0 0 18px hsl(var(--primary) / 0.5); }
+  .text-glow-soft { text-shadow: 0 0 6px hsl(var(--primary) / 0.6); }
+  .glow-border { box-shadow: var(--shadow-glow); }
+  .glow-soft { box-shadow: var(--shadow-soft); }
+
+  .panel {
+    background: var(--gradient-panel);
+    border: 1px solid hsl(var(--primary) / 0.5);
+    box-shadow: var(--shadow-soft), inset 0 0 24px hsl(var(--primary) / 0.06);
+    position: relative;
+  }
+  .panel::before, .panel::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    border: 2px solid hsl(var(--primary));
+    box-shadow: 0 0 8px hsl(var(--primary));
+  }
+  .panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+  .panel::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+  .scanline {
+    background-image: repeating-linear-gradient(0deg, transparent 0 3px, hsl(var(--primary) / 0.04) 3px 4px);
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 12px hsl(var(--primary) / 0.4), 0 0 24px hsl(var(--primary) / 0.2); }
+    50%      { box-shadow: 0 0 24px hsl(var(--primary) / 0.8), 0 0 48px hsl(var(--primary) / 0.4); }
+  }
+  @keyframes float-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin-slow { to { transform: rotate(360deg); } }
+  @keyframes flicker {
+    0%,100% { opacity: 1; } 45% { opacity: 0.85; } 50% { opacity: 1; } 55% { opacity: 0.92; }
+  }
+  .animate-pulse-glow { animation: pulse-glow 2.4s ease-in-out infinite; }
+  .animate-float-up { animation: float-up 0.5s ease-out both; }
+  .animate-spin-slow { animation: spin-slow 18s linear infinite; }
+  .animate-flicker { animation: flicker 4s ease-in-out infinite; }
+
+  @keyframes splash-bar {
+    from { width: 0; }
+    to   { width: 100%; }
+  }
+}
