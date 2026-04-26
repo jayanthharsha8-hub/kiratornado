@@ -275,23 +275,15 @@ export default function AdminTournaments() {
               Slot Management — {slotsTournament?.title}
             </DialogTitle>
           </DialogHeader>
-          <p className="text-xs text-muted-foreground">{regs.length} / {slotsTournament?.total_slots} slots filled</p>
-          <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
-            {Array.from({ length: slotsTournament?.total_slots ?? 0 }, (_, i) => {
-              const reg = regs[i];
-              return (
-                <div key={i} className={`flex aspect-square items-center justify-center rounded border text-[10px] font-bold ${reg ? "border-primary bg-primary/20 text-primary" : "border-muted bg-card text-muted-foreground"}`} title={reg?.username}>
-                  {reg ? i + 1 : i + 1}
-                </div>
-              );
-            })}
-          </div>
+          <p className="text-xs text-muted-foreground">{regs.length} / {slotsTournament?.total_slots} players joined</p>
           {regs.length > 0 && (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Slot</TableHead>
+                  <TableHead>#</TableHead>
                   <TableHead>Player</TableHead>
+                  <TableHead>Level</TableHead>
+                  <TableHead>UID</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -299,7 +291,9 @@ export default function AdminTournaments() {
                 {regs.map((r, i) => (
                   <TableRow key={r.id}>
                     <TableCell>{i + 1}</TableCell>
-                    <TableCell>{r.username}</TableCell>
+                    <TableCell><span className="font-semibold">{r.player_name}</span><div className="text-[10px] text-muted-foreground">@{r.username}</div></TableCell>
+                    <TableCell>Lv.{r.player_level}</TableCell>
+                    <TableCell className="font-mono text-xs">UID:{r.ff_uid}</TableCell>
                     <TableCell className="text-right">
                       <button onClick={() => removePlayer(r.id)} className="rounded p-1 text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></button>
                     </TableCell>
