@@ -25,13 +25,27 @@ const ICONS: Record<Category, JSX.Element> = {
   lone_wolf: <Skull className="h-5 w-5" strokeWidth={2} />,
 };
 
+const PREVIEWS: Record<Category, { title: string; mode: string; fee: string; prize?: string; slots?: string; time: string }> = {
+  free_match: { title: "FREE MATCH", mode: "BR SOLO", fee: "FREE", slots: "12/50", time: "8:45 PM" },
+  battle_royale: { title: "BATTLE ROYALE", mode: "SOLO", fee: "₹10", prize: "₹100", time: "9:15 PM" },
+  classic_squad: { title: "CLASSIC SQUAD", mode: "4v4", fee: "₹20", prize: "₹200", time: "9:45 PM" },
+  lone_wolf: { title: "LONE WOLF", mode: "1v1", fee: "₹5", time: "10:15 PM" },
+};
+
+const randomLiveCounts = () => ({
+  free_match: Math.floor(Math.random() * 151) + 50,
+  battle_royale: Math.floor(Math.random() * 151) + 50,
+  classic_squad: Math.floor(Math.random() * 151) + 50,
+  lone_wolf: Math.floor(Math.random() * 151) + 50,
+}) as Record<Category, number>;
+
 const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [coins, setCoins] = useState(0);
   
   const [playerName, setPlayerName] = useState("Hunter");
-  const [liveCounts, setLiveCounts] = useState<Record<Category, number>>({ free_match: 0, battle_royale: 0, classic_squad: 0, lone_wolf: 0 });
+  const [liveCounts, setLiveCounts] = useState<Record<Category, number>>(randomLiveCounts);
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
 
@@ -39,13 +53,12 @@ const Home = () => {
     if (!user) return;
     supabase.from("profiles").select("coins,player_name").eq("id", user.id).maybeSingle()
       .then(({ data }) => { if (data) { setCoins(data.coins); setPlayerName(data.player_name); } });
-    supabase.from("tournaments").select("category").eq("published", true).eq("status", "live")
-      .then(({ data }) => {
-        const next = { free_match: 0, battle_royale: 0, classic_squad: 0, lone_wolf: 0 } as Record<Category, number>;
-        (data ?? []).forEach((t) => { next[t.category as Category] += 1; });
-        setLiveCounts(next);
-      });
   }, [user]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setLiveCounts(randomLiveCounts()), 3000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!api) return;
