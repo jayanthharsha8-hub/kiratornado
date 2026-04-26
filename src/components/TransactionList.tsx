@@ -32,7 +32,7 @@ export const TransactionList = ({ items, emptyText = "No transactions yet" }: { 
             <div
               className={cn(
                 "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-transparent",
-                credit ? "border-green-400/70 text-green-400" : withdraw ? "border-primary/70 text-primary" : "border-destructive/70 text-destructive"
+                credit ? "border-success/70 text-success" : withdraw ? "border-primary/70 text-primary" : "border-destructive/70 text-destructive"
               )}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -43,7 +43,7 @@ export const TransactionList = ({ items, emptyText = "No transactions yet" }: { 
               {tx.status === "pending" && <p className="mt-0.5 text-[10px] text-primary">Pending review</p>}
             </div>
             <div className="text-right">
-              <p className={cn("font-display text-sm font-bold", credit ? "text-green-400" : "text-destructive")}>{credit ? "+" : "-"}{tx.amount}</p>
+              <p className={cn("font-display text-sm font-bold", credit ? "text-success" : "text-destructive")}>{credit ? "+" : "-"}{tx.amount}</p>
               <p className="text-[10px] text-muted-foreground">Coins</p>
             </div>
           </div>
