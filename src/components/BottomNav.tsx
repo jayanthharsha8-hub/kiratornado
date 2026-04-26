@@ -18,7 +18,6 @@ export const BottomNav = () => {
       <div className="mx-auto flex max-w-md items-stretch justify-between px-1 py-1">
         {TABS.map(({ to, label, icon: Icon }) => {
           const active = location.pathname === to || (to === "/wallet" && location.pathname.startsWith("/wallet"));
-          const accent = "#a855f7";
           return (
             <NavLink
               key={to}
