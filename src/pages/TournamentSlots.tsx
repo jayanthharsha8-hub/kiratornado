@@ -48,19 +48,10 @@ const TournamentSlots = () => {
     }
     setJoining(true);
 
-    if (tournament.entry_fee > 0) {
-      if (!profile || profile.coins < tournament.entry_fee) {
-        setJoining(false);
-        toast.error("Insufficient coins. Add more in Wallet.");
-        return;
-      }
-      await supabase.from("profiles").update({ coins: profile.coins - tournament.entry_fee }).eq("id", user.id);
-    }
-
-    const { error } = await supabase.from("registrations").insert({ tournament_id: tournament.id, user_id: user.id });
+    const { error } = await (supabase.rpc as any)("join_tournament", { _tournament_id: tournament.id });
     setJoining(false);
     if (error) {
-      toast.error("Already joined or error occurred.");
+      toast.error(error.message || "Unable to join tournament.");
       return;
     }
     toast.success("Slot secured. Good luck, Hunter.", {

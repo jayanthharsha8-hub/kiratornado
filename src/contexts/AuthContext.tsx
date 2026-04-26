@@ -19,13 +19,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const restoreAccount = async (sess: Session | null) => {
+      if (!sess?.user) return;
+      await (supabase.rpc as any)("ensure_player_account");
+    };
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
+      setTimeout(() => { restoreAccount(sess); }, 0);
     });
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
       setSession(sess);
       setUser(sess?.user ?? null);
+      restoreAccount(sess);
       setLoading(false);
     });
     return () => subscription.unsubscribe();

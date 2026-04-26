@@ -36,22 +36,14 @@ const WalletRedeemConfirm = () => {
     if (!user || !amount) return;
     if (coins < amount) { toast.error("Not enough coins. Earn more to withdraw."); return; }
     setBusy(true);
-    const code = genCode();
-
-    // Deduct coins immediately
-    const newCoins = coins - amount;
-    const { error: upErr } = await supabase.from("profiles").update({ coins: newCoins }).eq("id", user.id);
-    if (upErr) { setBusy(false); toast.error(upErr.message); return; }
-
-    // Save withdrawal request
-    const { error } = await supabase.from("wallet_requests").insert({
-      user_id: user.id, type: "withdraw", amount, withdraw_type: "redeem", upi_ref: code,
+    const { error } = await (supabase.rpc as any)("request_withdrawal", {
+      _amount: amount,
+      _withdraw_type: "redeem",
+      _upi_id: null,
+      _upi_ref: genCode(),
     });
-
     setBusy(false);
     if (error) {
-      // refund on insert failure
-      await supabase.from("profiles").update({ coins }).eq("id", user.id);
       toast.error(error.message);
       return;
     }
