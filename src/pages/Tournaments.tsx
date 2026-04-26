@@ -18,6 +18,8 @@ type JoinedMatch = {
   status: "upcoming" | "live" | "completed" | "cancelled";
   room_id: string | null;
   room_password: string | null;
+  total_slots: number;
+  players_count?: number;
 };
 
 const STATUS_COLOR: Record<JoinedMatch["status"], string> = {
@@ -41,9 +43,13 @@ const Tournaments = () => {
         .select("tournament_id, tournaments(id, title, category, scheduled_at, status, room_id, room_password)")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      const list: JoinedMatch[] = (data ?? [])
+      const baseList: JoinedMatch[] = (data ?? [])
         .map((r: any) => r.tournaments)
         .filter(Boolean);
+      const list = await Promise.all(baseList.map(async (match) => {
+        const { count } = await supabase.from("registrations").select("id", { count: "exact", head: true }).eq("tournament_id", match.id);
+        return { ...match, players_count: count ?? 0 };
+      }));
       setMatches(list);
       setLoading(false);
     })();
@@ -56,16 +62,16 @@ const Tournaments = () => {
   };
 
   return (
-    <div className="relative min-h-screen pb-24" style={{ background: "#05070d" }}>
+    <div className="relative min-h-screen pb-20 scanline">
       <Particles />
       <header className="sticky top-0 z-30 border-b border-primary/30 bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-md items-center gap-3 px-3 py-2">
           <button onClick={() => { playSound("tick"); navigate(-1); }} className="text-primary"><ArrowLeft className="h-5 w-5" /></button>
           <h1 className="font-display text-lg font-bold uppercase tracking-widest text-foreground text-glow">My Matches</h1>
         </div>
       </header>
 
-      <main className="mx-auto max-w-md space-y-4 px-4 pt-5">
+      <main className="mx-auto max-w-md space-y-3 px-3 pt-3">
         <p className="text-[10px] uppercase tracking-[0.3em] text-primary/80">[ Joined Tournaments ]</p>
 
         {loading ? (
@@ -90,23 +96,31 @@ const Tournaments = () => {
               return (
                 <div
                   key={m.id}
-                  className="relative overflow-hidden rounded-md border bg-card/60 p-4 backdrop-blur"
+                  className="relative overflow-hidden rounded-sm border bg-card/60 p-3 backdrop-blur"
                   style={{ borderColor: meta.color, boxShadow: `0 0 12px ${meta.colorSoft}` }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-[9px] uppercase tracking-[0.3em]" style={{ color: meta.color }}>{meta.title}</p>
-                      <h3 className="font-display text-base font-black uppercase tracking-wider text-foreground text-glow truncate">{m.title}</h3>
+                      <h3 className="font-display text-sm font-black uppercase tracking-wider text-foreground text-glow truncate">{m.title}</h3>
                     </div>
                     <span
-                      className="rounded border px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest animate-pulse-glow"
+                      className="rounded-sm border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest animate-pulse-glow"
                       style={{ borderColor: sColor, color: sColor, backgroundColor: `${sColor}22` }}
                     >
                       {m.status}
                     </span>
                   </div>
 
-                  <div className="mt-3 flex items-center gap-2 text-xs text-foreground/80">
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-foreground/80">
+                    <div className="flex items-center gap-1.5 rounded-sm border border-primary/25 bg-background/35 px-2 py-1.5">
+                      <span className="text-primary">Mode</span> {meta.title}
+                    </div>
+                    <div className="flex items-center gap-1.5 rounded-sm border border-primary/25 bg-background/35 px-2 py-1.5">
+                      <span className="text-primary">Players</span> {m.players_count ?? 0}/{m.total_slots}
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 text-xs text-foreground/80">
                     <Calendar className="h-3.5 w-3.5 text-primary" />
                     {new Date(m.scheduled_at).toLocaleString()}
                   </div>
