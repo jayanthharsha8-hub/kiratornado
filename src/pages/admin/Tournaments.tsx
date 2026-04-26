@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Eye, Key, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Key, Users } from "lucide-react";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import type { Tables } from "@/integrations/supabase/types";
 
