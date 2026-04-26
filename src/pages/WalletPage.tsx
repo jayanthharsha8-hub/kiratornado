@@ -9,8 +9,6 @@ import { TransactionList, type WalletTransaction } from "@/components/Transactio
 import { playSound } from "@/hooks/useSound";
 import { toast } from "sonner";
 
-const ADD_AMOUNTS = [30, 50, 100];
-
 const WalletPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
