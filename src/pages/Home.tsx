@@ -204,32 +204,22 @@ const Home = () => {
         {/* Weekly Leaderboard CTA */}
         <button
           onClick={() => { playSound("pulse"); navigate("/leaderboard"); }}
-           className="flex w-full items-center gap-2 rounded-sm border border-primary/40 bg-card/50 p-3 text-left transition hover:scale-[1.005] active:scale-[0.99]"
-          style={{
-            borderColor: "#a855f7",
-            boxShadow: "0 0 14px rgba(168,85,247,0.25)",
-          }}
+          className="flex w-full items-center gap-2 rounded-sm border border-primary/40 bg-card/50 p-3 text-left transition hover:scale-[1.005] active:scale-[0.99] glow-soft"
         >
           <div
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border"
-            style={{
-              borderColor: "#a855f7",
-              color: "#a855f7",
-              backgroundColor: "rgba(168,85,247,0.12)",
-              boxShadow: "0 0 12px rgba(168,85,247,0.5)",
-            }}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-primary/50 bg-primary/10 text-primary glow-soft"
           >
             <Crown className="h-6 w-6" />
           </div>
           <div className="flex-1">
-            <div className="font-display text-sm font-black uppercase tracking-widest text-foreground" style={{ textShadow: "0 0 8px rgba(168,85,247,0.6)" }}>
+            <div className="font-display text-xs font-black uppercase tracking-widest text-foreground text-glow-soft">
               Weekly Leaderboard
             </div>
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
               Top 10 Hunters -- Rankings
             </div>
           </div>
-          <ChevronRight className="h-5 w-5" style={{ color: "#a855f7" }} />
+          <ChevronRight className="h-4 w-4 text-primary" />
         </button>
       </main>
 
