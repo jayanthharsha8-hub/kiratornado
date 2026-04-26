@@ -19,17 +19,10 @@ import bannerArena from "@/assets/banner-arena.jpg";
 import bannerFF from "@/assets/banner-ff.jpg";
 
 const ICONS: Record<Category, JSX.Element> = {
-  free_match: <Crosshair className="h-7 w-7" strokeWidth={2} />,
-  battle_royale: <Swords className="h-7 w-7" strokeWidth={2} />,
-  classic_squad: <Users className="h-7 w-7" strokeWidth={2} />,
-  lone_wolf: <Skull className="h-7 w-7" strokeWidth={2} />,
-};
-
-const LIVE_COUNTS: Record<Category, number> = {
-  free_match: 124,
-  battle_royale: 36,
-  classic_squad: 28,
-  lone_wolf: 16,
+  free_match: <Crosshair className="h-5 w-5" strokeWidth={2} />,
+  battle_royale: <Swords className="h-5 w-5" strokeWidth={2} />,
+  classic_squad: <Users className="h-5 w-5" strokeWidth={2} />,
+  lone_wolf: <Skull className="h-5 w-5" strokeWidth={2} />,
 };
 
 const Home = () => {
@@ -38,6 +31,7 @@ const Home = () => {
   const [coins, setCoins] = useState(0);
   
   const [playerName, setPlayerName] = useState("Hunter");
+  const [liveCounts, setLiveCounts] = useState<Record<Category, number>>({ free_match: 0, battle_royale: 0, classic_squad: 0, lone_wolf: 0 });
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
 
@@ -45,6 +39,12 @@ const Home = () => {
     if (!user) return;
     supabase.from("profiles").select("coins,player_name").eq("id", user.id).maybeSingle()
       .then(({ data }) => { if (data) { setCoins(data.coins); setPlayerName(data.player_name); } });
+    supabase.from("tournaments").select("category").eq("published", true).eq("status", "live")
+      .then(({ data }) => {
+        const next = { free_match: 0, battle_royale: 0, classic_squad: 0, lone_wolf: 0 } as Record<Category, number>;
+        (data ?? []).forEach((t) => { next[t.category as Category] += 1; });
+        setLiveCounts(next);
+      });
   }, [user]);
 
   useEffect(() => {
@@ -58,11 +58,11 @@ const Home = () => {
   const banners = [bannerShadowArmy, bannerHunter, bannerMonarch, bannerArena, bannerFF];
 
   return (
-    <div className="relative min-h-screen pb-24" style={{ background: "#05070d" }}>
+    <div className="relative min-h-screen pb-20 scanline">
       <Particles />
 
       <header className="sticky top-0 z-30 border-b border-primary/30 bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-md items-center justify-between px-3 py-2">
           <SideMenu>
             <button aria-label="Open menu" className="flex items-center gap-2" onClick={() => playSound("tick")}>
               <Logo size={32} withText />
@@ -71,35 +71,34 @@ const Home = () => {
           </SideMenu>
           <button
             onClick={() => { playSound("tick"); navigate("/wallet"); }}
-            className="flex items-center gap-2 rounded border border-primary/50 bg-card/60 px-3 py-1.5 text-primary transition hover:border-primary hover:glow-soft"
+            className="flex items-center gap-1.5 rounded-sm border border-primary/50 bg-card/60 px-2 py-1 text-primary transition hover:border-primary hover:glow-soft"
           >
             <Wallet className="h-4 w-4" />
-            <span className="font-display text-sm font-bold text-glow-soft">{coins}</span>
-            <span className="text-xs">coins</span>
+            <span className="font-display text-xs font-bold text-glow-soft">{coins}</span>
+            <span className="text-[10px]">coins</span>
           </button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-md space-y-5 px-4 pt-5">
+      <main className="mx-auto max-w-md space-y-3 px-3 pt-3">
         {/* Banner Carousel */}
         <section className="animate-float-up">
           <div
-            className="relative overflow-hidden rounded-md border border-primary/60"
-            style={{ boxShadow: "0 0 24px hsl(var(--primary) / 0.45)" }}
+             className="relative overflow-hidden rounded-sm border border-primary/60 glow-soft"
           >
             <Carousel setApi={setApi} opts={{ loop: true }}>
               <CarouselContent>
                 {banners.map((src, i) => (
                   <CarouselItem key={i}>
-                    <div className="relative h-44 w-full">
+                     <div className="relative h-32 w-full">
                       <img src={src} alt="Hunter banner" width={1280} height={640} className="h-full w-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
-                      <div className="absolute inset-y-0 left-0 flex w-3/5 flex-col justify-center p-4">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-primary/90">[ System Welcome ]</p>
-                        <h2 className="font-display text-xl font-black uppercase tracking-wider text-foreground text-glow">
+                       <div className="absolute inset-y-0 left-0 flex w-2/3 flex-col justify-center p-3">
+                         <p className="text-[9px] uppercase tracking-[0.24em] text-primary/90">[ System Welcome ]</p>
+                         <h2 className="font-display text-base font-black uppercase tracking-wider text-foreground text-glow">
                           WELCOME <span className="text-primary">HUNTER</span>
                         </h2>
-                        <p className="mt-1 text-xs text-muted-foreground">
+                         <p className="mt-1 text-[11px] text-muted-foreground">
                           Hunter <span className="text-primary">{playerName}</span> -- choose your arena.
                         </p>
                       </div>
@@ -110,7 +109,7 @@ const Home = () => {
             </Carousel>
           </div>
           {/* Slider dots */}
-          <div className="mt-3 flex items-center justify-center gap-2">
+          <div className="mt-2 flex items-center justify-center gap-1.5">
             {banners.map((_, i) => (
               <button
                 key={i}
@@ -129,15 +128,15 @@ const Home = () => {
 
         {/* Tournament image cards */}
         <SystemPanel title="Tournaments">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {(Object.keys(CATEGORY_META) as Category[]).map((c, idx) => {
               const meta = CATEGORY_META[c];
-              const live = LIVE_COUNTS[c];
+              const live = liveCounts[c];
               return (
                 <button
                   key={c}
                   onClick={() => { playSound("pulse"); navigate(`/category/${c}`); }}
-                  className="group relative aspect-square overflow-hidden rounded-lg border bg-card text-left transition-all duration-200 hover:scale-[1.03] active:scale-[0.97] animate-float-up"
+                  className="group relative aspect-square overflow-hidden rounded-sm border bg-card text-left transition-all duration-200 hover:scale-[1.015] active:scale-[0.98] animate-float-up"
                   style={{
                     borderColor: meta.color,
                     boxShadow: `0 0 8px ${meta.colorSoft}, inset 0 0 14px ${meta.colorSoft}`,
@@ -160,7 +159,7 @@ const Home = () => {
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div
-                        className="flex h-12 w-12 items-center justify-center rounded-full"
+                         className="flex h-9 w-9 items-center justify-center border border-primary/40"
                         style={{
                           color: meta.color,
                           background: `radial-gradient(circle, ${meta.colorSoft} 0%, transparent 70%)`,
@@ -173,18 +172,18 @@ const Home = () => {
                   </div>
 
                   {/* Bottom text area */}
-                  <div className="flex h-1/2 flex-col items-center justify-center gap-1.5 px-2 pb-2 text-center">
+                   <div className="flex h-1/2 flex-col items-center justify-center gap-1 px-2 pb-2 text-center">
                     <div
-                      className="font-display text-[13px] font-black uppercase leading-tight tracking-wider text-foreground"
+                       className="font-display text-[11px] font-black uppercase leading-tight tracking-wider text-foreground"
                       style={{ textShadow: `0 0 8px ${meta.color}` }}
                     >
                       {meta.title}
                     </div>
-                    <div className="text-[10px] text-foreground/65">
+                     <div className="text-[9px] leading-tight text-foreground/70">
                       {meta.subtitle}
                     </div>
                     <span
-                      className="mt-0.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold"
+                       className="mt-0.5 inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[9px] font-semibold"
                       style={{
                         borderColor: meta.color,
                         color: meta.color,
@@ -205,7 +204,7 @@ const Home = () => {
         {/* Weekly Leaderboard CTA */}
         <button
           onClick={() => { playSound("pulse"); navigate("/leaderboard"); }}
-          className="flex w-full items-center gap-3 rounded-lg border bg-card/50 p-4 text-left transition hover:scale-[1.01] active:scale-[0.99]"
+           className="flex w-full items-center gap-2 rounded-sm border border-primary/40 bg-card/50 p-3 text-left transition hover:scale-[1.005] active:scale-[0.99]"
           style={{
             borderColor: "#a855f7",
             boxShadow: "0 0 14px rgba(168,85,247,0.25)",
