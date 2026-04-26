@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Eye, Key } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Key, Users } from "lucide-react";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -33,7 +33,7 @@ export default function AdminTournaments() {
   const [form, setForm] = useState(empty);
   const [roomForm, setRoomForm] = useState({ id: "", room_id: "", room_password: "" });
   const [slotsTournament, setSlotsTournament] = useState<Tournament | null>(null);
-  const [regs, setRegs] = useState<{ id: string; user_id: string; username: string }[]>([]);
+  const [regs, setRegs] = useState<{ id: string; user_id: string; username: string; player_name: string; player_level: number; ff_uid: string }[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
   const load = async () => {
@@ -96,9 +96,12 @@ export default function AdminTournaments() {
     const { data: regData } = await supabase.from("registrations").select("id, user_id").eq("tournament_id", t.id);
     if (regData && regData.length > 0) {
       const userIds = regData.map(r => r.user_id);
-      const { data: profiles } = await supabase.from("profiles").select("id, username").in("id", userIds);
-      const profileMap = new Map((profiles ?? []).map(p => [p.id, p.username]));
-      setRegs(regData.map(r => ({ id: r.id, user_id: r.user_id, username: profileMap.get(r.user_id) ?? "Unknown" })));
+      const { data: profiles } = await supabase.from("profiles").select("id, username, player_name, player_level, ff_uid").in("id", userIds);
+      const profileMap = new Map((profiles ?? []).map(p => [p.id, p]));
+      setRegs(regData.map(r => {
+        const p = profileMap.get(r.user_id);
+        return { id: r.id, user_id: r.user_id, username: p?.username ?? "Unknown", player_name: p?.player_name ?? "Unknown", player_level: p?.player_level ?? 1, ff_uid: p?.ff_uid ?? "—" };
+      }));
     } else {
       setRegs([]);
     }
@@ -165,7 +168,7 @@ export default function AdminTournaments() {
                   <TableCell className="text-xs">{new Date(t.scheduled_at).toLocaleString()}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => openSlots(t)} className="rounded p-1.5 text-primary hover:bg-primary/10" title="View Slots"><Eye className="h-4 w-4" /></button>
+                      <button onClick={() => openSlots(t)} className="rounded p-1.5 text-primary hover:bg-primary/10" title="Players"><Users className="h-4 w-4" /></button>
                       <button onClick={() => openRoom(t)} className="rounded p-1.5 text-primary hover:bg-primary/10" title="Room Details"><Key className="h-4 w-4" /></button>
                       <button onClick={() => edit(t)} className="rounded p-1.5 text-primary hover:bg-primary/10" title="Edit"><Pencil className="h-4 w-4" /></button>
                       <button onClick={() => del(t.id)} className="rounded p-1.5 text-destructive hover:bg-destructive/10" title="Delete"><Trash2 className="h-4 w-4" /></button>
