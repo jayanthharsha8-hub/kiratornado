@@ -1,0 +1,41 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Particles } from "@/components/Particles";
+import { TransactionList, type WalletTransaction } from "@/components/TransactionList";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { playSound } from "@/hooks/useSound";
+
+const TransactionHistory = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [items, setItems] = useState<WalletTransaction[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    (supabase.from("transactions" as any) as any)
+      .select("id,type,amount,message,status,created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }: { data: WalletTransaction[] | null }) => setItems(data ?? []));
+  }, [user]);
+
+  return (
+    <div className="relative min-h-screen pb-8 scanline">
+      <Particles />
+      <header className="sticky top-0 z-30 border-b border-primary/30 bg-background/85 backdrop-blur">
+        <div className="mx-auto flex max-w-md items-center gap-3 px-3 py-2">
+          <button onClick={() => { playSound("tick"); navigate(-1); }} className="text-primary"><ArrowLeft className="h-5 w-5" /></button>
+          <h1 className="mx-auto font-display text-sm font-bold uppercase tracking-[0.35em] text-primary text-glow-soft">History</h1>
+          <span className="w-5" />
+        </div>
+      </header>
+      <main className="mx-auto max-w-md px-4 pt-4">
+        <TransactionList items={items} />
+      </main>
+    </div>
+  );
+};
+
+export default TransactionHistory;
