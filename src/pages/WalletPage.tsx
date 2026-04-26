@@ -68,10 +68,10 @@ const WalletPage = () => {
         </section>
 
         <section className="grid grid-cols-2 gap-3">
-          <button onClick={() => addCoins(30)} className="flex h-14 items-center justify-center gap-2 border border-primary/60 bg-transparent font-display text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-primary/10 active:scale-[0.98] active:glow-soft">
+          <button onClick={() => addCoins(30)} className="flex h-14 items-center justify-center gap-2 border border-primary/70 bg-transparent font-display text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-primary/5 active:scale-[0.97] active:glow-soft">
             <Plus className="h-4 w-4" /> Add Coins
           </button>
-          <button onClick={() => go("/wallet/withdraw")} className="flex h-14 items-center justify-center gap-2 border border-primary/60 bg-transparent font-display text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-primary/10 active:scale-[0.98] active:glow-soft">
+          <button onClick={() => go("/wallet/withdraw")} className="flex h-14 items-center justify-center gap-2 border border-primary/70 bg-transparent font-display text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-primary/5 active:scale-[0.97] active:glow-soft">
             <PlayCircle className="h-4 w-4" /> Withdraw
           </button>
         </section>
