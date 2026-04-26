@@ -277,6 +277,42 @@ export type Database = {
         }
         Relationships: []
       }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          message: string
+          reference_id: string | null
+          reference_type: string | null
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          message: string
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          message?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -342,6 +378,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_coins: {
+        Args: { _amount: number; _direction: number; _user_id: string }
+        Returns: Json
+      }
+      admin_handle_wallet_request: {
+        Args: {
+          _request_id: string
+          _status: Database["public"]["Enums"]["wallet_request_status"]
+        }
+        Returns: Json
+      }
       ensure_player_account: { Args: never; Returns: Json }
       has_role: {
         Args: {

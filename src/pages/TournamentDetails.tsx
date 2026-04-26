@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, Clock, Coins, Users, Shield, Sparkles } from "luci
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import { Particles } from "@/components/Particles";
 import { playSound } from "@/hooks/useSound";
+import { toast } from "sonner";
 
 interface Tournament {
   id: string; title: string; category: Category; entry_fee: number; total_slots: number;
@@ -20,6 +21,7 @@ const TournamentDetails = () => {
   const [t, setT] = useState<Tournament | null>(null);
   const [joined, setJoined] = useState(false);
   const [count, setCount] = useState(0);
+  const [joining, setJoining] = useState(false);
 
   const load = async () => {
     if (!id) return;
@@ -55,9 +57,17 @@ const TournamentDetails = () => {
   const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const entryStr = t.entry_fee === 0 ? "FREE" : `${t.entry_fee} coins`;
 
-  const handleJoinClick = () => {
+  const handleJoinClick = async () => {
+    if (!t || joined || joining) return;
     playSound("pulse");
-    navigate(`/tournament/${t.id}/slots`);
+    if (count >= t.total_slots) { toast.error("MATCH FULL"); return; }
+    setJoining(true);
+    const { error } = await (supabase.rpc as any)("join_tournament", { _tournament_id: t.id });
+    setJoining(false);
+    if (error) { toast.error(error.message || "Unable to join match"); return; }
+    toast.success("JOINED");
+    setJoined(true);
+    setCount((value) => value + 1);
   };
 
   return (
@@ -160,7 +170,7 @@ const TournamentDetails = () => {
               boxShadow: `0 6px 20px ${accent}55`,
             }}
           >
-            {count >= t.total_slots ? "Full" : "Join Match"}
+            {joining ? "Joining..." : count >= t.total_slots ? "MATCH FULL" : "JOIN MATCH"}
           </button>
         )}
 
