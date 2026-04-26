@@ -31,7 +31,7 @@ const TransactionHistory = () => {
           <span className="w-5" />
         </div>
       </header>
-      <main className="mx-auto max-w-md px-4 pt-4">
+      <main className="mx-auto max-w-md px-3 pt-4">
         <TransactionList items={items} />
       </main>
     </div>
