@@ -25,11 +25,11 @@ const ICONS: Record<Category, JSX.Element> = {
   lone_wolf: <Skull className="h-5 w-5" strokeWidth={2} />,
 };
 
-const PREVIEWS: Record<Category, { title: string; mode: string; fee: string; prize?: string; slots?: string; time: string }> = {
-  free_match: { title: "FREE MATCH", mode: "BR SOLO", fee: "FREE", slots: "12/50", time: "8:45 PM" },
-  battle_royale: { title: "BATTLE ROYALE", mode: "SOLO", fee: "₹10", prize: "₹100", time: "9:15 PM" },
-  classic_squad: { title: "CLASSIC SQUAD", mode: "4v4", fee: "₹20", prize: "₹200", time: "9:45 PM" },
-  lone_wolf: { title: "LONE WOLF", mode: "1v1", fee: "₹5", time: "10:15 PM" },
+const CARD_TITLES: Record<Category, string> = {
+  free_match: "FREE MATCHES",
+  battle_royale: "BATTLE ROYALE",
+  classic_squad: "CLASSIC SQUAD",
+  lone_wolf: "LONE WOLF",
 };
 
 const randomLiveCounts = () => ({
@@ -145,7 +145,6 @@ const Home = () => {
             {(Object.keys(CATEGORY_META) as Category[]).map((c, idx) => {
               const meta = CATEGORY_META[c];
               const live = liveCounts[c];
-              const preview = PREVIEWS[c];
               return (
                 <button
                   key={c}
@@ -157,8 +156,7 @@ const Home = () => {
                     animationDelay: `${idx * 0.05}s`,
                   }}
                 >
-                  {/* Top image area (~50%) */}
-                  <div className="relative h-[44%] w-full overflow-hidden">
+                  <div className="absolute inset-0 overflow-hidden">
                     <img
                       src={meta.image}
                       alt={meta.title}
@@ -169,35 +167,28 @@ const Home = () => {
                     />
                     <div
                       className="absolute inset-0"
-                      style={{ background: `linear-gradient(180deg, ${meta.colorSoft} 0%, rgba(5,7,13,0.55) 60%, #05070d 100%)` }}
+                      style={{ background: `linear-gradient(180deg, ${meta.colorSoft} 0%, hsl(var(--background) / 0.42) 42%, hsl(var(--background) / 0.88) 100%)` }}
                     />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="flex h-9 w-9 items-center justify-center" style={{ color: meta.color, filter: `brightness(1.15) drop-shadow(0 0 7px ${meta.color})` }}>
-                        {ICONS[c]}
-                      </div>
-                    </div>
                   </div>
 
-                  {/* Bottom text area */}
-                   <div className="flex h-[56%] flex-col items-center justify-center gap-1 px-2 pb-2 text-center">
+                  <div className="relative z-10 flex h-full flex-col items-center justify-between px-2.5 py-3 text-center">
+                    <div className="flex h-10 items-center justify-center" style={{ color: meta.color, filter: `brightness(1.15) drop-shadow(0 0 7px ${meta.color})` }}>
+                      {ICONS[c]}
+                    </div>
+
                     <div
-                       className="font-display text-[11px] font-black uppercase leading-tight tracking-wider text-foreground"
+                      className="flex flex-1 items-center justify-center font-display text-sm font-black uppercase leading-tight tracking-wider text-foreground"
                       style={{ textShadow: `0 0 8px ${meta.color}` }}
                     >
-                      {preview.title}
+                      {CARD_TITLES[c]}
                     </div>
-                     <div className="text-[9px] leading-tight text-foreground/75">
-                      {preview.mode} • {preview.fee}{preview.prize ? ` • ${preview.prize}` : preview.slots ? ` • ${preview.slots}` : ""}
-                    </div>
-                    <div className="text-[9px] leading-tight text-muted-foreground">
-                      {preview.time}
-                    </div>
+
                     <span
-                       key={live}
-                       className="mt-0.5 inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[9px] font-semibold text-success transition animate-float-up"
+                      key={live}
+                      className="inline-flex items-center gap-1 rounded-sm border px-2 py-1 text-[9px] font-semibold text-success transition animate-float-up"
                       style={{
                         borderColor: meta.color,
-                        backgroundColor: "rgba(5,7,13,0.55)",
+                        backgroundColor: "hsl(var(--background) / 0.72)",
                         boxShadow: `0 0 6px ${meta.colorSoft}`,
                       }}
                     >
