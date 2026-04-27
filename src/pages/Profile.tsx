@@ -53,7 +53,7 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [history, setHistory] = useState<MatchHistory[]>([]);
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ player_name: "", ff_uid: "" });
+  const [editForm, setEditForm] = useState({ player_name: "", ff_uid: "", player_level: "1" });
   const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
@@ -64,7 +64,7 @@ const ProfilePage = () => {
       .then(({ data }) => {
         if (data) {
           setProfile(data as Profile);
-          setEditForm({ player_name: data.player_name, ff_uid: data.ff_uid });
+          setEditForm({ player_name: data.player_name, ff_uid: data.ff_uid, player_level: String(data.player_level) });
         }
       });
 
@@ -83,14 +83,18 @@ const ProfilePage = () => {
   }, [user]);
 
   const saveEdit = async () => {
+    const nextLevel = Number(editForm.player_level);
     if (!user || !editForm.player_name.trim()) { toast.error("Player name required"); return; }
+    if (!/^\d+$/.test(editForm.ff_uid.trim())) { toast.error("Player UID must contain numbers only"); return; }
+    if (!Number.isInteger(nextLevel) || nextLevel < 1 || nextLevel > 100) { toast.error("Player level must be 1-100"); return; }
     await supabase.from("profiles").update({
       player_name: editForm.player_name.trim(),
       ff_uid: editForm.ff_uid.trim(),
+      player_level: nextLevel,
     }).eq("id", user.id);
-    toast.success("Profile updated");
+    toast.success("Profile updated successfully");
     setEditOpen(false);
-    setProfile(p => p ? { ...p, ...editForm } : p);
+    setProfile(p => p ? { ...p, player_name: editForm.player_name.trim(), ff_uid: editForm.ff_uid.trim(), player_level: nextLevel } : p);
   };
 
   if (!profile) return (
@@ -156,6 +160,26 @@ const ProfilePage = () => {
             </div>
           </div>
         </div>
+
+        <SystemPanel title="EDIT PROFILE">
+          <div className="space-y-3">
+            <div>
+              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Player Name</Label>
+              <Input value={editForm.player_name} onChange={e => setEditForm(p => ({ ...p, player_name: e.target.value }))} className="mt-1 border-primary/30 bg-card" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Player UID</Label>
+                <Input inputMode="numeric" value={editForm.ff_uid} onChange={e => setEditForm(p => ({ ...p, ff_uid: e.target.value.replace(/\D/g, "") }))} className="mt-1 border-primary/30 bg-card" />
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Player Level</Label>
+                <Input inputMode="numeric" value={editForm.player_level} onChange={e => setEditForm(p => ({ ...p, player_level: e.target.value.replace(/\D/g, "") }))} className="mt-1 border-primary/30 bg-card" />
+              </div>
+            </div>
+            <Button onClick={saveEdit} className="w-full bg-transparent border border-primary/70 font-display text-xs uppercase tracking-widest text-primary hover:bg-primary/10 active:scale-[0.97]">Save Changes</Button>
+          </div>
+        </SystemPanel>
 
         {/* Stats */}
         <SystemPanel title="Combat Stats">
