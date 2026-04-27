@@ -209,7 +209,7 @@ const Home = () => {
               return (
                 <button
                   key={c}
-                  onClick={() => { playSound("pulse"); navigate(`/category/${c}`); }}
+                  onClick={() => { playSound("pulse"); setSelectedCategory(c); setActiveTab("upcoming"); }}
                   className="group relative aspect-square overflow-hidden rounded-sm border bg-card text-left transition-all duration-200 hover:scale-[1.015] active:scale-[0.97] animate-float-up"
                   style={{
                     borderColor: meta.color,
@@ -237,11 +237,19 @@ const Home = () => {
                       {ICONS[c]}
                     </div>
 
-                    <div
-                      className="flex flex-1 items-center justify-center font-display text-sm font-black uppercase leading-tight tracking-wider text-foreground"
-                      style={{ textShadow: `0 0 8px ${meta.color}` }}
-                    >
-                      {CARD_TITLES[c]}
+                    <div className="flex flex-1 flex-col items-center justify-center gap-1">
+                      <div
+                        className="font-display text-sm font-black uppercase leading-tight tracking-wider text-foreground"
+                        style={{ textShadow: `0 0 8px ${meta.color}` }}
+                      >
+                        {CARD_TITLES[c]}
+                      </div>
+                      <div
+                        className="text-[10px] font-semibold leading-none text-foreground/80"
+                        style={{ textShadow: `0 0 7px ${meta.color}` }}
+                      >
+                        {CARD_SUBTEXT[c]}
+                      </div>
                     </div>
 
                     <span
