@@ -4,13 +4,14 @@ import { SystemPanel } from "@/components/SystemPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Key, Users } from "lucide-react";
+import { Coins, Plus, Pencil, Trash2, Key, Users } from "lucide-react";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -35,6 +36,9 @@ export default function AdminTournaments() {
   const [slotsTournament, setSlotsTournament] = useState<Tournament | null>(null);
   const [regs, setRegs] = useState<{ id: string; user_id: string; username: string; player_name: string; player_level: number; ff_uid: string }[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [rewardOpen, setRewardOpen] = useState(false);
+  const [rewardPlayer, setRewardPlayer] = useState<{ user_id: string; player_name: string; player_level: number; ff_uid: string } | null>(null);
+  const [rewardForm, setRewardForm] = useState({ amount: 100, reason: "" });
 
   const load = async () => {
     let q = supabase.from("tournaments").select("*").order("scheduled_at", { ascending: false });
@@ -113,6 +117,27 @@ export default function AdminTournaments() {
     await supabase.from("registrations").delete().eq("id", regId);
     toast.success("Player removed");
     if (slotsTournament) openSlots(slotsTournament);
+  };
+
+  const openReward = (player: typeof regs[number]) => {
+    setRewardPlayer(player);
+    setRewardForm({ amount: 100, reason: "" });
+    setRewardOpen(true);
+  };
+
+  const confirmReward = async () => {
+    if (!rewardPlayer) return;
+    const amount = Math.floor(Number(rewardForm.amount));
+    if (!Number.isFinite(amount) || amount <= 0) { toast.error("Enter a valid coin amount"); return; }
+
+    const { error } = await (supabase.rpc as any)("admin_adjust_coins", {
+      _user_id: rewardPlayer.user_id,
+      _amount: amount,
+      _direction: 1,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Coins added successfully");
+    setRewardOpen(false);
   };
 
   const statusColor = (s: string) => {
