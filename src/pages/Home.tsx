@@ -77,6 +77,11 @@ const Home = () => {
   const [liveCounts, setLiveCounts] = useState<Record<Category, number>>(randomLiveCounts);
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>("upcoming");
+  const [tournaments, setTournaments] = useState<TournamentPreview[]>([]);
+  const [registrationCounts, setRegistrationCounts] = useState<Record<string, number>>({});
+  const [loadingTournaments, setLoadingTournaments] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -96,6 +101,33 @@ const Home = () => {
     const t = setInterval(() => api.scrollNext(), 5000);
     return () => clearInterval(t);
   }, [api]);
+
+  useEffect(() => {
+    if (!selectedCategory) return;
+    setLoadingTournaments(true);
+    supabase
+      .from("tournaments")
+      .select("id,title,category,entry_fee,prize_pool,total_slots,scheduled_at,status")
+      .eq("category", selectedCategory)
+      .eq("status", activeTab)
+      .eq("published", true)
+      .order("scheduled_at", { ascending: activeTab !== "completed" })
+      .then(async ({ data }) => {
+        const rows = (data ?? []) as TournamentPreview[];
+        setTournaments(rows);
+        const counts = await Promise.all(
+          rows.map(async (tournament) => {
+            const { count } = await supabase
+              .from("registrations")
+              .select("id", { count: "exact", head: true })
+              .eq("tournament_id", tournament.id);
+            return [tournament.id, count ?? 0] as const;
+          }),
+        );
+        setRegistrationCounts(Object.fromEntries(counts));
+        setLoadingTournaments(false);
+      });
+  }, [selectedCategory, activeTab]);
 
   const banners = [bannerShadowArmy, bannerHunter, bannerMonarch, bannerArena, bannerFF];
 
