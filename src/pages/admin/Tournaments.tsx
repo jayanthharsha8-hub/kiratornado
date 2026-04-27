@@ -4,13 +4,14 @@ import { SystemPanel } from "@/components/SystemPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Key, Users } from "lucide-react";
+import { Coins, Plus, Pencil, Trash2, Key, Users } from "lucide-react";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -35,6 +36,9 @@ export default function AdminTournaments() {
   const [slotsTournament, setSlotsTournament] = useState<Tournament | null>(null);
   const [regs, setRegs] = useState<{ id: string; user_id: string; username: string; player_name: string; player_level: number; ff_uid: string }[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [rewardOpen, setRewardOpen] = useState(false);
+  const [rewardPlayer, setRewardPlayer] = useState<{ user_id: string; player_name: string; player_level: number; ff_uid: string } | null>(null);
+  const [rewardForm, setRewardForm] = useState({ amount: 100, reason: "" });
 
   const load = async () => {
     let q = supabase.from("tournaments").select("*").order("scheduled_at", { ascending: false });
@@ -113,6 +117,27 @@ export default function AdminTournaments() {
     await supabase.from("registrations").delete().eq("id", regId);
     toast.success("Player removed");
     if (slotsTournament) openSlots(slotsTournament);
+  };
+
+  const openReward = (player: typeof regs[number]) => {
+    setRewardPlayer(player);
+    setRewardForm({ amount: 100, reason: "" });
+    setRewardOpen(true);
+  };
+
+  const confirmReward = async () => {
+    if (!rewardPlayer) return;
+    const amount = Math.floor(Number(rewardForm.amount));
+    if (!Number.isFinite(amount) || amount <= 0) { toast.error("Enter a valid coin amount"); return; }
+
+    const { error } = await (supabase.rpc as any)("admin_adjust_coins", {
+      _user_id: rewardPlayer.user_id,
+      _amount: amount,
+      _direction: 1,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Coins added successfully");
+    setRewardOpen(false);
   };
 
   const statusColor = (s: string) => {
@@ -295,12 +320,46 @@ export default function AdminTournaments() {
                     <TableCell>Lv.{r.player_level}</TableCell>
                     <TableCell className="font-mono text-xs">UID:{r.ff_uid}</TableCell>
                     <TableCell className="text-right">
-                      <button onClick={() => removePlayer(r.id)} className="rounded p-1 text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => openReward(r)} className="inline-flex items-center gap-1 rounded-sm border border-primary/45 px-2 py-1 font-display text-[10px] font-bold uppercase tracking-wider text-primary transition hover:bg-primary/10 active:scale-[0.97]">
+                          <Coins className="h-3 w-3" /> Add Coins
+                        </button>
+                        <button onClick={() => removePlayer(r.id)} className="rounded-sm p-1 text-destructive transition hover:bg-destructive/10 active:scale-[0.97]"><Trash2 className="h-4 w-4" /></button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* COIN REWARD DIALOG */}
+      <Dialog open={rewardOpen} onOpenChange={setRewardOpen}>
+        <DialogContent className="border-primary/50 bg-background glow-soft sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-lg uppercase tracking-widest text-primary text-glow-soft">Add Coins</DialogTitle>
+          </DialogHeader>
+          {rewardPlayer && (
+            <div className="space-y-4">
+              <div className="rounded-sm border border-primary/30 bg-card/55 p-3">
+                <div className="font-display text-sm font-bold uppercase tracking-wider text-foreground">{rewardPlayer.player_name}</div>
+                <div className="mt-1 text-[11px] text-muted-foreground">UID: {rewardPlayer.ff_uid} <span className="text-primary">|</span> Level {rewardPlayer.player_level}</div>
+              </div>
+              <div>
+                <Label className="text-xs uppercase tracking-widest text-muted-foreground">Amount (Coins)</Label>
+                <Input type="number" min={1} value={rewardForm.amount} onChange={(e) => setRewardForm(p => ({ ...p, amount: +e.target.value }))} className="border-primary/40 bg-card" />
+              </div>
+              <div>
+                <Label className="text-xs uppercase tracking-widest text-muted-foreground">Reason (Optional)</Label>
+                <Textarea value={rewardForm.reason} onChange={(e) => setRewardForm(p => ({ ...p, reason: e.target.value }))} placeholder="Tournament winnings" className="rounded-sm border-primary/40 bg-card" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" onClick={() => setRewardOpen(false)} className="border-primary/35 bg-card/60">Cancel</Button>
+                <Button onClick={confirmReward} className="bg-primary font-display text-xs uppercase tracking-widest text-primary-foreground hover:bg-primary-glow">Confirm</Button>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
