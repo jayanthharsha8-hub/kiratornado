@@ -130,6 +130,9 @@ const Home = () => {
   }, [selectedCategory, activeTab]);
 
   const banners = [bannerShadowArmy, bannerHunter, bannerMonarch, bannerArena, bannerFF];
+  const selectedMeta = selectedCategory ? CATEGORY_META[selectedCategory] : null;
+  const formatTime = (value: string) => new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
+  const formatEntry = (value: number) => (value === 0 ? "FREE" : `${value} coins`);
 
   return (
     <div className="relative min-h-screen pb-20 scanline">
