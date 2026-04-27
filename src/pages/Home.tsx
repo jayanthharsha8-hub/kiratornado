@@ -25,6 +25,13 @@ const ICONS: Record<Category, JSX.Element> = {
   lone_wolf: <Skull className="h-5 w-5" strokeWidth={2} />,
 };
 
+const PREVIEWS: Record<Category, { title: string; mode: string; fee: string; prize?: string; slots?: string; time: string }> = {
+  free_match: { title: "FREE MATCH", mode: "BR SOLO", fee: "FREE", slots: "12/50", time: "8:45 PM" },
+  battle_royale: { title: "BATTLE ROYALE", mode: "SOLO", fee: "₹10", prize: "₹100", time: "9:15 PM" },
+  classic_squad: { title: "CLASSIC SQUAD", mode: "4v4", fee: "₹20", prize: "₹200", time: "9:45 PM" },
+  lone_wolf: { title: "LONE WOLF", mode: "1v1", fee: "₹5", time: "10:15 PM" },
+};
+
 const randomLiveCounts = () => ({
   free_match: Math.floor(Math.random() * 151) + 50,
   battle_royale: Math.floor(Math.random() * 151) + 50,
@@ -138,14 +145,15 @@ const Home = () => {
             {(Object.keys(CATEGORY_META) as Category[]).map((c, idx) => {
               const meta = CATEGORY_META[c];
               const live = liveCounts[c];
+              const preview = PREVIEWS[c];
               return (
                 <button
                   key={c}
                   onClick={() => { playSound("pulse"); navigate(`/category/${c}`); }}
                   className="group relative aspect-square overflow-hidden rounded-sm border bg-card text-left transition-all duration-200 hover:scale-[1.015] active:scale-[0.97] animate-float-up"
                   style={{
-                     borderColor: "hsl(var(--primary) / 0.7)",
-                     boxShadow: "0 0 8px hsl(var(--primary) / 0.22), inset 0 0 14px hsl(var(--primary) / 0.06)",
+                    borderColor: meta.color,
+                    boxShadow: `0 0 8px ${meta.colorSoft}, inset 0 0 14px ${meta.colorSoft}`,
                     animationDelay: `${idx * 0.05}s`,
                   }}
                 >
@@ -161,10 +169,10 @@ const Home = () => {
                     />
                     <div
                       className="absolute inset-0"
-                       style={{ background: "linear-gradient(180deg, hsl(var(--primary) / 0.26) 0%, hsl(var(--background) / 0.62) 60%, hsl(var(--background)) 100%)" }}
+                      style={{ background: `linear-gradient(180deg, ${meta.colorSoft} 0%, rgba(5,7,13,0.55) 60%, #05070d 100%)` }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
-                       <div className="flex h-9 w-9 items-center justify-center text-primary" style={{ filter: "brightness(1.15) drop-shadow(0 0 7px hsl(var(--primary) / 0.75))" }}>
+                      <div className="flex h-9 w-9 items-center justify-center" style={{ color: meta.color, filter: `brightness(1.15) drop-shadow(0 0 7px ${meta.color})` }}>
                         {ICONS[c]}
                       </div>
                     </div>
@@ -174,15 +182,23 @@ const Home = () => {
                    <div className="flex h-[56%] flex-col items-center justify-center gap-1 px-2 pb-2 text-center">
                     <div
                        className="font-display text-[11px] font-black uppercase leading-tight tracking-wider text-foreground"
-                      style={{ textShadow: "0 0 8px hsl(var(--primary) / 0.72)" }}
+                      style={{ textShadow: `0 0 8px ${meta.color}` }}
                     >
-                      {meta.title}
+                      {preview.title}
+                    </div>
+                     <div className="text-[9px] leading-tight text-foreground/75">
+                      {preview.mode} • {preview.fee}{preview.prize ? ` • ${preview.prize}` : preview.slots ? ` • ${preview.slots}` : ""}
+                    </div>
+                    <div className="text-[9px] leading-tight text-muted-foreground">
+                      {preview.time}
                     </div>
                     <span
                        key={live}
-                        className="mt-1 inline-flex items-center gap-1 rounded-sm border border-primary/70 bg-background/60 px-1.5 py-0.5 text-[9px] font-semibold text-primary transition animate-float-up"
+                       className="mt-0.5 inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[9px] font-semibold text-success transition animate-float-up"
                       style={{
-                        boxShadow: "0 0 6px hsl(var(--primary) / 0.24)",
+                        borderColor: meta.color,
+                        backgroundColor: "rgba(5,7,13,0.55)",
+                        boxShadow: `0 0 6px ${meta.colorSoft}`,
                       }}
                     >
                       <UserRound className="h-3 w-3" strokeWidth={2.2} />

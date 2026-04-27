@@ -31,7 +31,7 @@ export const BottomNav = () => {
                 <span className="absolute inset-x-2 -top-px h-px bg-primary glow-soft" />
               )}
               <Icon
-                className={cn("h-4 w-4 transition-transform", active && "scale-105 text-glow-soft drop-shadow-[0_0_7px_hsl(var(--primary)/0.75)]")}
+                className={cn("h-4 w-4 transition-transform", active && "scale-105 text-glow-soft drop-shadow-[0_0_8px_hsl(var(--primary))]")}
               />
               <span className="font-display text-[8px] font-bold uppercase tracking-wider">{label}</span>
             </NavLink>
