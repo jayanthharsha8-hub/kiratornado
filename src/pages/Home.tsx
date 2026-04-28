@@ -170,7 +170,7 @@ const Home = () => {
               return (
                 <button
                   key={c}
-                  onClick={() => { playSound("pulse"); setSelectedCategory(c); setActiveTab("upcoming"); }}
+                  onClick={() => openTournamentPage(c)}
                   className="group relative aspect-square overflow-hidden rounded-sm border bg-card text-left transition-all duration-200 hover:scale-[1.015] active:scale-[0.97] animate-float-up"
                   style={{
                     borderColor: meta.color,
@@ -254,95 +254,6 @@ const Home = () => {
         </button>
       </main>
 
-      <Drawer open={!!selectedCategory} onOpenChange={(open) => !open && setSelectedCategory(null)}>
-        <DrawerContent
-          className="mx-auto h-[85vh] max-w-md overflow-hidden rounded-t-sm border-x border-t bg-background/95 p-0 shadow-none animate-scale-in"
-          style={selectedMeta ? { borderColor: selectedMeta.color, boxShadow: `0 0 18px ${selectedMeta.colorSoft}, inset 0 0 18px ${selectedMeta.colorSoft}` } : undefined}
-        >
-          {selectedCategory && selectedMeta && (
-            <div className="flex h-full flex-col">
-              <div className="relative border-b px-3 pb-3 pt-2" style={{ borderColor: selectedMeta.color }}>
-                <div className="mx-auto mb-2 h-1 w-14 rounded-full" style={{ background: selectedMeta.color, boxShadow: `0 0 10px ${selectedMeta.color}` }} />
-                <DrawerClose className="absolute right-3 top-2 flex h-8 w-8 items-center justify-center rounded-sm border bg-background/70 transition active:scale-[0.97]" style={{ borderColor: selectedMeta.color, color: selectedMeta.color }}>
-                  <X className="h-4 w-4" />
-                </DrawerClose>
-                <DrawerTitle
-                  className="font-display text-xl font-black uppercase tracking-widest"
-                  style={{ color: selectedMeta.color, textShadow: `0 0 10px ${selectedMeta.color}` }}
-                >
-                  {CARD_TITLES[selectedCategory]}
-                </DrawerTitle>
-                <DrawerDescription className="mt-1 text-xs font-semibold text-foreground/75">
-                  {selectedMeta.subtitle}
-                </DrawerDescription>
-                <div className="mt-3 grid grid-cols-3 gap-1.5">
-                  {(["upcoming", "live", "completed"] as Tab[]).map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => { playSound("tick"); setActiveTab(tab); }}
-                      className="rounded-sm border px-1 py-2 font-display text-[10px] font-bold uppercase tracking-wider transition active:scale-[0.97]"
-                      style={{
-                        borderColor: activeTab === tab ? selectedMeta.color : `${selectedMeta.color}55`,
-                        color: activeTab === tab ? selectedMeta.color : "hsl(var(--muted-foreground))",
-                        background: activeTab === tab ? selectedMeta.colorSoft : "hsl(var(--card) / 0.45)",
-                        boxShadow: activeTab === tab ? `0 0 10px ${selectedMeta.colorSoft}` : "none",
-                      }}
-                    >
-                      {tab === "live" ? "Ongoing" : tab}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
-                {loadingTournaments ? (
-                  <div className="flex h-32 items-center justify-center text-xs uppercase tracking-[0.35em] animate-flicker" style={{ color: selectedMeta.color }}>
-                    Loading
-                  </div>
-                ) : tournaments.length === 0 ? (
-                  <div className="rounded-sm border bg-card/40 px-3 py-8 text-center text-xs uppercase tracking-widest text-muted-foreground" style={{ borderColor: `${selectedMeta.color}66` }}>
-                    No {activeTab === "live" ? "ongoing" : activeTab} tournaments
-                  </div>
-                ) : (
-                  tournaments.map((tournament, index) => {
-                    const slots = registrationCounts[tournament.id] ?? 0;
-                    return (
-                      <article
-                        key={tournament.id}
-                        className="animate-float-up rounded-sm border bg-card/55 p-2.5 transition hover:scale-[1.005]"
-                        style={{ borderColor: `${selectedMeta.color}99`, boxShadow: `0 0 8px ${selectedMeta.colorSoft}`, animationDelay: `${index * 0.04}s` }}
-                      >
-                        <div className="grid grid-cols-[28px_1fr_auto] items-center gap-2">
-                          <div style={{ color: selectedMeta.color, filter: `drop-shadow(0 0 6px ${selectedMeta.color})` }}>{ICONS[selectedCategory]}</div>
-                          <div className="min-w-0">
-                            <h3 className="truncate font-display text-xs font-black uppercase tracking-wider text-foreground">{tournament.title}</h3>
-                            <p className="text-[10px] font-semibold text-foreground/70">{MODE_TEXT[selectedCategory]}</p>
-                          </div>
-                          <div className="font-display text-[11px] font-bold" style={{ color: selectedMeta.color }}>{slots}/{tournament.total_slots}</div>
-                        </div>
-                        <div className="mt-2 grid grid-cols-3 gap-1.5 text-[10px] text-foreground/75">
-                          <InfoPill icon={<Coins className="h-3 w-3" />} label={formatEntry(tournament.entry_fee)} />
-                          <InfoPill icon={<Trophy className="h-3 w-3" />} label={`${tournament.prize_pool} prize`} />
-                          <InfoPill icon={<Clock className="h-3 w-3" />} label={formatTime(tournament.scheduled_at)} />
-                        </div>
-                        <Button
-                          onClick={() => { playSound("pulse"); navigate(`/tournament/${tournament.id}`); }}
-                          className="mt-2 h-9 w-full border-0 font-display text-[11px] font-black uppercase tracking-[0.22em] active:scale-[0.97]"
-                          style={{ background: selectedMeta.color, color: "hsl(var(--background))", boxShadow: `0 0 12px ${selectedMeta.colorSoft}` }}
-                        >
-                          Join Now
-                        </Button>
-                      </article>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          )}
-        </DrawerContent>
-      </Drawer>
-
-      
       <BottomNav />
     </div>
   );
