@@ -71,7 +71,7 @@ const BattleRoyalePage = () => {
           </button>
           <div className="absolute left-4 top-9">
             <h1 className="font-display text-[40px] font-black uppercase leading-[0.85] tracking-normal text-foreground" style={{ textShadow: "0 2px 0 hsl(0 0% 0%)" }}>
-              BATTLE<br /><span style={{ color: red }}>ROYALE</span>
+              BATTLE<br /><span style={{ color: "red" }}>ROYALE</span>
             </h1>
             <p className="mt-4 font-display text-sm font-bold uppercase tracking-[0.42em] text-foreground/90">SOLO - 50 PLAYERS</p>
             <div className="mt-3 flex w-[210px] items-center gap-3 border bg-background/55 px-3 py-2" style={{ borderColor: red }}>
