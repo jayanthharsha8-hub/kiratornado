@@ -110,6 +110,134 @@ const CategoryPage = () => {
   );
 };
 
+const BattleRoyalePage = ({ tab, setTab, tournaments, loading, userId }: { tab: Tab; setTab: (tab: Tab) => void; tournaments: Tournament[]; loading: boolean; userId?: string }) => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-background px-3 py-3">
+      <main className="mx-auto max-w-md">
+        <section className="relative h-[200px] overflow-hidden rounded-2xl border border-royale-red-line shadow-[0_0_10px_hsl(var(--royale-red)/0.28)]">
+          <img src={battleRoyaleReference} alt="Battle Royale" className="h-full w-full object-cover object-center" />
+          <div className="absolute inset-0 bg-background/40" />
+          <button
+            onClick={() => navigate("/home")}
+            aria-label="Close"
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-foreground/65 bg-background/15 text-foreground shadow-[0_0_7px_hsl(var(--royale-red)/0.25)] transition active:scale-[0.97]"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <div className="absolute left-4 top-9 max-w-[58%]">
+            <h1 className="font-display text-3xl font-black uppercase leading-[0.9] tracking-wide text-foreground drop-shadow-[0_0_8px_hsl(var(--royale-red)/0.45)]">
+              Battle <span className="block text-royale-red">Royale</span>
+            </h1>
+            <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.35em] text-foreground/80">Solo - 50 Players</p>
+            <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-royale-red-line bg-background/45 px-3 py-2 shadow-[0_0_8px_hsl(var(--royale-red)/0.18)]">
+              <Trophy className="h-5 w-5 text-royale-red" />
+              <div className="leading-none">
+                <p className="text-[8px] font-bold uppercase tracking-widest text-foreground/75">Total Prize Pool</p>
+                <p className="font-display text-base font-black text-royale-red">₹50,000</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-3 grid grid-cols-3 gap-2.5">
+          {(["upcoming", "live", "completed"] as Tab[]).map((item) => (
+            <button
+              key={item}
+              onClick={() => setTab(item)}
+              className={`h-12 rounded-lg border font-display text-[10px] font-black uppercase tracking-wider transition active:scale-[0.97] ${
+                tab === item
+                  ? "border-royale-red-line bg-royale-red-soft text-foreground shadow-[0_0_9px_hsl(var(--royale-red)/0.24)]"
+                  : "border-royale-muted bg-transparent text-muted-foreground"
+              }`}
+            >
+              {item === "live" ? "Ongoing" : item}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-3 space-y-3">
+          {loading ? (
+            <div className="py-12 text-center text-xs uppercase tracking-[0.35em] text-royale-red">Loading...</div>
+          ) : tournaments.length === 0 ? (
+            <div className="rounded-xl border border-royale-muted bg-royale-panel p-5 text-center text-xs uppercase tracking-[0.25em] text-muted-foreground">No tournaments</div>
+          ) : (
+            tournaments.map((t) => <BattleRoyaleCard key={t.id} tournament={t} userId={userId} />)
+          )}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+const BattleRoyaleCard = ({ tournament: t, userId }: { tournament: Tournament; userId?: string }) => {
+  const navigate = useNavigate();
+  const [joined, setJoined] = useState(false);
+  const [count, setCount] = useState(0);
+  const date = new Date(t.scheduled_at);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const { count: c } = await supabase.from("registrations").select("id", { count: "exact", head: true }).eq("tournament_id", t.id);
+      setCount(c ?? 0);
+      if (!userId) return;
+      const { data: reg } = await supabase.from("registrations").select("id").eq("tournament_id", t.id).eq("user_id", userId).maybeSingle();
+      setJoined(!!reg);
+    };
+    loadData();
+  }, [t.id, userId]);
+
+  const dateStr = date.toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" });
+  const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
+
+  return (
+    <article className="min-h-[104px] rounded-xl border border-royale-red-line bg-royale-panel-soft p-3 shadow-[0_0_10px_hsl(var(--royale-red)/0.22)]">
+      <div className="flex h-full items-center gap-3">
+        <div className="flex h-16 w-12 shrink-0 items-center justify-center text-royale-red drop-shadow-[0_0_7px_hsl(var(--royale-red)/0.38)]">
+          <Swords className="h-9 w-9" strokeWidth={2.2} />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate font-display text-base font-black uppercase tracking-wide text-foreground">Battle Royale</h2>
+          <p className="mt-0.5 text-xs font-bold uppercase tracking-wider text-royale-red">Solo - 50 Players</p>
+          <div className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Calendar className="h-3 w-3 shrink-0" />
+            <span className="truncate">{dateStr}</span>
+            <span>•</span>
+            <Clock className="h-3 w-3 shrink-0" />
+            <span className="truncate">{timeStr}</span>
+          </div>
+        </div>
+
+        <div className="flex w-[92px] shrink-0 flex-col items-end gap-1.5">
+          <div className="flex items-center gap-1 text-sm font-bold text-foreground">
+            <Users className="h-4 w-4" />
+            {count}/{t.total_slots}
+          </div>
+          <div className="grid w-full grid-cols-2 gap-1 text-right">
+            <div>
+              <p className="text-[8px] uppercase text-muted-foreground">Entry</p>
+              <p className="text-[11px] font-bold text-foreground"><Coins className="mr-0.5 inline h-3 w-3 text-royale-red" />₹{t.entry_fee}</p>
+            </div>
+            <div>
+              <p className="text-[8px] uppercase text-muted-foreground">Prize</p>
+              <p className="text-[11px] font-bold text-royale-red"><Trophy className="mr-0.5 inline h-3 w-3" />₹{t.prize_pool}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate(joined ? `/tournament/${t.id}` : `/tournament-slots/${t.id}`)}
+            disabled={!joined && (t.status !== "upcoming" || count >= t.total_slots)}
+            className="h-8 rounded-lg bg-royale-red px-3 font-display text-[10px] font-black uppercase tracking-wide text-foreground shadow-[0_0_9px_hsl(var(--royale-red)/0.35)] transition active:scale-[0.97] disabled:opacity-55"
+          >
+            {joined ? "Joined" : "Join Now"}
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+};
+
 const TournamentCard = ({ tournament: t, index, userId }: { tournament: Tournament; index: number; userId?: string }) => {
   const navigate = useNavigate();
   const [joined, setJoined] = useState(false);
