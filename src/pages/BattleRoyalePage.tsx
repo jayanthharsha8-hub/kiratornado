@@ -148,13 +148,13 @@ const BattleRoyaleCard = ({ tournament, count }: { tournament: Tournament; count
               <span className="inline-flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" /> {timeText}</span>
             </div>
           </div>
-          <div className="hidden border-l px-4 sm:block" style={{ borderColor: "hsl(0 0% 100% / 0.12)" }}>
+          <div className="border-l px-2" style={{ borderColor: "hsl(0 0% 100% / 0.12)" }}>
             <p className="text-[10px] uppercase text-foreground/55">Entry Fee</p>
-            <p className="font-display text-lg font-black text-orange-300"><Coins className="mr-1 inline h-4 w-4 text-yellow-400" />₹{tournament.entry_fee}</p>
+            <p className="font-display text-sm font-black text-orange-300"><Coins className="mr-1 inline h-4 w-4 text-yellow-400" />₹{tournament.entry_fee}</p>
           </div>
-          <div className="hidden border-l px-4 sm:block" style={{ borderColor: "hsl(0 0% 100% / 0.12)" }}>
+          <div className="border-l px-2" style={{ borderColor: "hsl(0 0% 100% / 0.12)" }}>
             <p className="text-[10px] uppercase text-foreground/55">Prize Pool</p>
-            <p className="font-display text-lg font-black" style={{ color: red }}><Trophy className="mr-1 inline h-4 w-4 text-yellow-400" />₹{tournament.prize_pool}</p>
+            <p className="font-display text-sm font-black" style={{ color: red }}><Trophy className="mr-1 inline h-4 w-4 text-yellow-400" />₹{tournament.prize_pool}</p>
           </div>
           <Button onClick={() => navigate(`/tournament-slots/${tournament.id}`)} className="h-11 border bg-transparent px-3 font-display text-xs font-black uppercase" style={{ borderColor: red, color: "hsl(0 0% 98%)", boxShadow: `0 0 14px ${redSoft}` }}>
             Join Now
