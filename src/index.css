@@ -128,3 +128,49 @@
     to   { width: 100%; }
   }
 }
+/* ===== MOBILE UI PERFECT FIX ===== */
+
+/* CENTER FULL APP */
+body {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* BANNER FIX */
+img {
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+}
+
+/* TOURNAMENT CARD FIX */
+.card, .tournament-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+}
+
+/* LEFT ICON SIZE */
+.card img {
+  width: 60px;
+  height: 60px;
+  margin-right: 12px;
+}
+
+/* TEXT FIX */
+h1, h2 {
+  font-size: 16px;
+}
+
+p, span {
+  font-size: 12px;
+}
+
+/* BUTTON FIX */
+button {
+  padding: 8px 14px;
+  font-size: 12px;
+  border-radius: 8px;
+}
