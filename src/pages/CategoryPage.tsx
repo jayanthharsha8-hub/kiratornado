@@ -30,10 +30,6 @@ const CategoryPage = () => {
   const cat = category as Category;
   const meta = CATEGORY_META[cat];
 
-  if (meta && isBattleRoyale(cat)) {
-    return <BattleRoyalePage category={cat} tab={tab} setTab={setTab} tournaments={tournaments} loading={loading} userId={user?.id} />;
-  }
-
   useEffect(() => {
     if (!cat || !meta) return;
     setLoading(true);
@@ -51,6 +47,10 @@ const CategoryPage = () => {
   }, [cat, tab]);
 
   if (!meta) return <div className="flex min-h-screen items-center justify-center text-xs uppercase tracking-[0.4em] text-primary text-glow">Invalid category</div>;
+
+  if (isBattleRoyale(cat)) {
+    return <BattleRoyalePage tab={tab} setTab={setTab} tournaments={tournaments} loading={loading} userId={user?.id} />;
+  }
 
   return (
     <div className="relative min-h-screen scanline pb-10">
