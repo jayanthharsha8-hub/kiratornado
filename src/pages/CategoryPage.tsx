@@ -30,6 +30,10 @@ const CategoryPage = () => {
   const cat = category as Category;
   const meta = CATEGORY_META[cat];
 
+  if (meta && isBattleRoyale(cat)) {
+    return <BattleRoyalePage category={cat} tab={tab} setTab={setTab} tournaments={tournaments} loading={loading} userId={user?.id} />;
+  }
+
   useEffect(() => {
     if (!cat || !meta) return;
     setLoading(true);
@@ -57,7 +61,7 @@ const CategoryPage = () => {
           <button onClick={() => navigate("/home")} className="flex items-center gap-1 text-primary hover:text-glow-soft">
             <ArrowLeft className="h-4 w-4" /><span className="text-xs uppercase tracking-widest">Back</span>
           </button>
-          <Logo size={28} />
+          <span className="font-display text-[10px] uppercase tracking-[0.3em] text-primary/80">Arena</span>
         </div>
       </header>
 
@@ -137,7 +141,7 @@ const TournamentCard = ({ tournament: t, index, userId }: { tournament: Tourname
   return (
     <div className="animate-float-up rounded border border-primary/50 bg-card/60 overflow-hidden glow-soft" style={{ animationDelay: `${index * 0.1}s` }}>
       <div className="relative h-40 overflow-hidden">
-        <img src={t.banner_url || banner} alt={t.title} className="h-full w-full object-cover" loading="lazy" />
+        <img src={t.banner_url || CATEGORY_META[t.category]?.image} alt={t.title} className="h-full w-full object-cover" loading="lazy" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-3">
           <div className="text-[10px] uppercase tracking-[0.3em] text-primary/80">[ {CATEGORY_META[t.category]?.title} ]</div>
