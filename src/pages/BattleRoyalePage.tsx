@@ -56,8 +56,8 @@ const BattleRoyalePage = () => {
 
   return (
     <div className="min-h-screen bg-background px-3 pb-8 pt-4 text-foreground">
-      <main className="mx-auto max-w-md space-y-4">
-        <section className="relative h-[188px] overflow-hidden" style={{ border: `2px solid ${red}`, boxShadow: `0 0 14px ${redSoft}` }}>
+      <main className"w-full px-3 space-y-4">
+        <section className="relative h-[220px] w-full overflow-hidden"> style={{ border: `2px solid ${red}`, boxShadow: `0 0 14px ${redSoft}` }}>
           <img src={CATEGORY_META.battle_royale.image} alt="Battle Royale" className="absolute inset-0 h-full w-full object-cover brightness-75 contrast-125 saturate-150" />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/25 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent" />
@@ -84,7 +84,7 @@ const BattleRoyalePage = () => {
           </div>
         </section>
 
-        <section className="grid grid-cols-3 overflow-hidden border bg-card/40" style={{ borderColor: "hsl(0 0% 100% / 0.16)" }}>
+        <section className="grid grid-cols-3 w-full overflow-hidden border bg-card/40" style={{ borderColor: "hsl(0 0% 100% / 0.16)" }}>
           {(["upcoming", "live", "completed"] as Tab[]).map((item) => (
             <button
               key={item}
