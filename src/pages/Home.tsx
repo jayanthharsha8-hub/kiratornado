@@ -8,12 +8,10 @@ import { BottomNav } from "@/components/BottomNav";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wallet, Swords, Crosshair, Users, Skull, Menu, Crown, ChevronRight, UserRound, X, Clock, Coins, Trophy } from "lucide-react";
+import { Wallet, Swords, Crosshair, Users, Skull, Menu, Crown, ChevronRight, UserRound } from "lucide-react";
 import { Particles } from "@/components/Particles";
 import { playSound } from "@/hooks/useSound";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
 import bannerShadowArmy from "@/assets/banner-shadow-army.jpg";
 import bannerHunter from "@/assets/banner-hunter.jpg";
 import bannerMonarch from "@/assets/banner-monarch.jpg";
@@ -40,26 +38,6 @@ const CARD_SUBTEXT: Record<Category, string> = {
   classic_squad: "4v4 • Squad Battles",
   lone_wolf: "2v2 • Unlimited Duels",
 };
-
-const MODE_TEXT: Record<Category, string> = {
-  free_match: "Daily Free",
-  battle_royale: "Solo",
-  classic_squad: "4v4",
-  lone_wolf: "2v2",
-};
-
-type TournamentPreview = {
-  id: string;
-  title: string;
-  category: Category;
-  entry_fee: number;
-  prize_pool: number;
-  total_slots: number;
-  scheduled_at: string;
-  status: "upcoming" | "live" | "completed";
-};
-
-type Tab = "upcoming" | "live" | "completed";
 
 const randomLiveCounts = () => ({
   free_match: Math.floor(Math.random() * 151) + 50,
