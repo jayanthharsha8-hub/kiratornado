@@ -3,12 +3,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { SystemPanel } from "@/components/SystemPanel";
-import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Clock, Coins, Users, Shield, Copy, Lock, CheckCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Coins, Users, Shield, Copy, Lock, CheckCircle, Trophy, X, Swords } from "lucide-react";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import { toast } from "sonner";
-import banner from "@/assets/banner-ff.jpg";
+import battleRoyaleReference from "@/assets/battle-royale-reference.png";
 
 interface Tournament {
   id: string; title: string; category: Category; entry_fee: number; total_slots: number;
@@ -17,6 +16,8 @@ interface Tournament {
 }
 
 type Tab = "upcoming" | "live" | "completed";
+
+const isBattleRoyale = (category: Category) => category === "battle_royale";
 
 const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
