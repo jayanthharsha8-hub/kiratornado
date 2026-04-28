@@ -234,3 +234,14 @@ button {
     text-align: center;
   }
 }
+/* REMOVE ALL WIDTH LIMITS */
+body, html, #root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* FORCE FULL WIDTH */
+.container, .max-w-screen-lg, .max-w-screen-md {
+  max-width: 100% !important;
+}
