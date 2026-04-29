@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      category_card_images: {
+        Row: {
+          card_image_url: string | null
+          category: Database["public"]["Enums"]["tournament_category"]
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          card_image_url?: string | null
+          category: Database["public"]["Enums"]["tournament_category"]
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          card_image_url?: string | null
+          category?: Database["public"]["Enums"]["tournament_category"]
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string
@@ -56,6 +80,42 @@ export type Database = {
           id?: string
           message?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      home_banners: {
+        Row: {
+          active: boolean
+          button_text: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          sort_order: number
+          subtitle: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          button_text?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          sort_order?: number
+          subtitle?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          button_text?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          sort_order?: number
+          subtitle?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -220,6 +280,30 @@ export type Database = {
           reported_user_id?: string
           reporter_id?: string
           status?: Database["public"]["Enums"]["report_status"]
+        }
+        Relationships: []
+      }
+      tournament_banners: {
+        Row: {
+          banner_image_url: string | null
+          created_at: string
+          id: string
+          tournament_id: string
+          updated_at: string
+        }
+        Insert: {
+          banner_image_url?: string | null
+          created_at?: string
+          id?: string
+          tournament_id: string
+          updated_at?: string
+        }
+        Update: {
+          banner_image_url?: string | null
+          created_at?: string
+          id?: string
+          tournament_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
