@@ -229,12 +229,13 @@ const TournamentCard = ({ tournament: t, index, userId }: { tournament: Tourname
 
         {/* Join button redirects to slots page */}
         {!joined && t.status === "upcoming" && count < t.total_slots && (
-          <Button
+          <button
             onClick={() => navigate(`/tournament-slots/${t.id}`)}
-            className="h-14 w-full bg-primary font-display text-sm font-bold uppercase tracking-[0.3em] text-primary-foreground hover:bg-primary-glow animate-pulse-glow"
+            className="h-14 w-full rounded-sm font-display text-sm font-bold uppercase tracking-[0.3em] text-background transition active:scale-[0.98] animate-pulse-glow"
+            style={{ backgroundColor: accent, boxShadow: `0 0 18px ${meta.colorSoft}` }}
           >
-            [ Join Now ]
-          </Button>
+            JOIN NOW
+          </button>
         )}
 
         {!joined && count >= t.total_slots && t.status === "upcoming" && (
@@ -247,9 +248,9 @@ const TournamentCard = ({ tournament: t, index, userId }: { tournament: Tourname
   );
 };
 
-const InfoCell = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
-  <div className="rounded border border-primary/30 bg-card/50 p-2.5">
-    <div className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-primary/80">{icon}{label}</div>
+const InfoCell = ({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent: string }) => (
+  <div className="rounded-sm border bg-background/35 p-2.5" style={{ borderColor: `${accent}55` }}>
+    <div className="flex items-center gap-1 text-[10px] uppercase tracking-widest" style={{ color: accent }}>{icon}{label}</div>
     <div className="mt-1 text-sm text-foreground">{value}</div>
   </div>
 );
