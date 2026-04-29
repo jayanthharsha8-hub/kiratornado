@@ -135,7 +135,7 @@ export default function AdminBanners() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold uppercase tracking-widest text-primary text-glow">Banner Management</h1>
-        <p className="text-xs text-muted-foreground">Separate image systems for home slider, category cards, and tournament pages</p>
+        <p className="text-xs text-muted-foreground">Separate image systems for home slider, category cards, tournament details, and category pages</p>
       </div>
 
       <SystemPanel title="Manage Home Banners">
@@ -179,6 +179,20 @@ export default function AdminBanners() {
                 <div><h3 className="font-display text-sm uppercase tracking-widest text-primary">{CATEGORY_META[category].title}</h3><p className="text-[10px] text-muted-foreground">Square card image only</p></div>
               </div>
               <Input type="file" accept="image/*" disabled={saving} onChange={(e) => saveCategoryImage(category, e.target.files?.[0])} className="border-primary/30 bg-card" />
+            </div>
+          ))}
+        </div>
+      </SystemPanel>
+
+      <SystemPanel title="Tournament Page Banners">
+        <div className="grid gap-3 md:grid-cols-2">
+          {CATEGORIES.map((category) => (
+            <div key={category} className="rounded border border-primary/25 bg-card/40 p-3">
+              <div className="mb-3 flex items-center gap-3">
+                {pageBanners[category] ? <img src={pageBanners[category]!} alt={`${CATEGORY_META[category].title} page banner`} className="h-16 w-36 object-cover" /> : <div className="flex h-16 w-36 items-center justify-center border border-primary/25 text-[10px] text-muted-foreground">No Banner</div>}
+                <div><h3 className="font-display text-sm uppercase tracking-widest text-primary">{CATEGORY_META[category].title}</h3><p className="text-[10px] text-muted-foreground">Category page top banner 16:6</p></div>
+              </div>
+              <Input type="file" accept="image/*" disabled={saving} onChange={(e) => saveTournamentPageBanner(category, e.target.files?.[0])} className="border-primary/30 bg-card" />
             </div>
           ))}
         </div>
