@@ -14,6 +14,8 @@ interface Tournament {
   status: string; notes: string | null; level_requirement: number;
 }
 
+const db = supabase as any;
+
 const TournamentDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -22,11 +24,14 @@ const TournamentDetails = () => {
   const [joined, setJoined] = useState(false);
   const [count, setCount] = useState(0);
   const [joining, setJoining] = useState(false);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
 
   const load = async () => {
     if (!id) return;
     const { data: tour } = await supabase.from("tournaments").select("*").eq("id", id).maybeSingle();
     if (tour) setT(tour as Tournament);
+    const { data: banner } = await db.from("tournament_banners").select("banner_image_url").eq("tournament_id", id).maybeSingle();
+    setBannerUrl(banner?.banner_image_url ?? null);
     if (user) {
       const { data: reg } = await supabase
         .from("registrations").select("id")
@@ -102,13 +107,17 @@ const TournamentDetails = () => {
         {/* HERO */}
         <section className="relative overflow-hidden rounded-xl">
           <div className="relative h-44 w-full">
-            <img
-              src={meta.image}
-              alt={meta.title}
-              width={1024}
-              height={512}
-              className="h-full w-full object-cover"
-            />
+            {bannerUrl ? (
+              <img
+                src={bannerUrl}
+                alt={t.title}
+                width={1024}
+                height={512}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-card text-xs uppercase tracking-[0.3em] text-muted-foreground">No Banner</div>
+            )}
             <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(5,7,13,0.55) 0%, rgba(5,7,13,0.85) 100%)" }} />
             <div className="absolute inset-x-0 bottom-0 p-4">
               <h1
