@@ -13,6 +13,7 @@ import { toast } from "sonner";
 type HomeBanner = { id: string; image_url: string | null; title: string; subtitle: string; button_text: string | null; sort_order: number; active: boolean };
 type CategoryCardImage = { id: string; category: Category; card_image_url: string | null };
 type TournamentBanner = { id: string; tournament_id: string; banner_image_url: string | null };
+type TournamentPageBanner = { id: string; category: Category; banner_image_url: string | null };
 type TournamentRow = { id: string; title: string; category: Category; scheduled_at: string };
 
 const CATEGORIES: Category[] = ["free_match", "battle_royale", "classic_squad", "lone_wolf"];
@@ -30,6 +31,7 @@ export default function AdminBanners() {
   const [homeBanners, setHomeBanners] = useState<HomeBanner[]>([]);
   const [categoryImages, setCategoryImages] = useState<Record<Category, string | null>>({ free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null });
   const [tournamentBanners, setTournamentBanners] = useState<Record<string, string | null>>({});
+  const [pageBanners, setPageBanners] = useState<Record<Category, string | null>>({ free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null });
   const [tournaments, setTournaments] = useState<TournamentRow[]>([]);
   const [homeForm, setHomeForm] = useState({ title: "", subtitle: "", button_text: "", sort_order: 0 });
   const [selectedTournament, setSelectedTournament] = useState("");
@@ -38,10 +40,11 @@ export default function AdminBanners() {
   const selectedTournamentName = useMemo(() => tournaments.find((t) => t.id === selectedTournament)?.title ?? "Select Tournament", [selectedTournament, tournaments]);
 
   const load = async () => {
-    const [home, cards, banners, tours] = await Promise.all([
+    const [home, cards, banners, pageBannerRows, tours] = await Promise.all([
       db.from("home_banners").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false }),
       db.from("category_card_images").select("*"),
       db.from("tournament_banners").select("*"),
+      db.from("tournament_page_banners").select("*"),
       supabase.from("tournaments").select("id,title,category,scheduled_at").order("scheduled_at", { ascending: false }),
     ]);
     setHomeBanners((home.data ?? []) as HomeBanner[]);
@@ -51,6 +54,9 @@ export default function AdminBanners() {
     const tournamentMap: Record<string, string | null> = {};
     ((banners.data ?? []) as TournamentBanner[]).forEach((row) => { tournamentMap[row.tournament_id] = row.banner_image_url; });
     setTournamentBanners(tournamentMap);
+    const pageMap = { free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null } as Record<Category, string | null>;
+    ((pageBannerRows.data ?? []) as TournamentPageBanner[]).forEach((row) => { pageMap[row.category] = row.banner_image_url; });
+    setPageBanners(pageMap);
     setTournaments(((tours.data ?? []) as TournamentRow[]));
   };
 
@@ -107,6 +113,19 @@ export default function AdminBanners() {
       const { error } = await db.from("tournament_banners").upsert({ tournament_id: selectedTournament, banner_image_url }, { onConflict: "tournament_id" });
       if (error) throw error;
       toast.success("Tournament banner saved");
+      await load();
+    } catch (error: any) { toast.error(error.message || "Upload failed"); }
+    setSaving(false);
+  };
+
+  const saveTournamentPageBanner = async (category: Category, file: File | undefined) => {
+    if (!file) { toast.error("Select a category page banner image"); return; }
+    setSaving(true);
+    try {
+      const banner_image_url = await uploadBannerImage(file, "tournament-page-banners");
+      const { error } = await db.from("tournament_page_banners").upsert({ category, banner_image_url }, { onConflict: "category" });
+      if (error) throw error;
+      toast.success("Tournament page banner saved");
       await load();
     } catch (error: any) { toast.error(error.message || "Upload failed"); }
     setSaving(false);
