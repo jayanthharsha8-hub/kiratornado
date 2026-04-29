@@ -170,7 +170,7 @@ export default function AdminBanners() {
           <div>
             <Label className="text-xs uppercase tracking-widest text-muted-foreground">Tournament</Label>
             <Select value={selectedTournament} onValueChange={setSelectedTournament}>
-              <SelectTrigger className="border-primary/30 bg-card"><SelectValue placeholder="Select Tournament">{selectedTournamentName}</SelectValue></SelectTrigger>
+              <SelectTrigger className="border-primary/30 bg-card"><SelectValue placeholder={selectedTournamentName} /></SelectTrigger>
               <SelectContent>{tournaments.map((t) => <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>)}</SelectContent>
             </Select>
           </div>
