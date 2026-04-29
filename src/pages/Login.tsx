@@ -20,12 +20,9 @@ const Login = () => {
     setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) { setLoading(false); toast.error("Invalid credentials"); return; }
-    const { data: roleData } = data.user.email === "jayanthharsha8@gmail.com"
-      ? await supabase.rpc("has_role", { _user_id: data.user.id, _role: "admin" })
-      : { data: false };
     setLoading(false);
     toast.success("Welcome back, Hunter.");
-    navigate(roleData ? "/admin" : "/home", { replace: true });
+    navigate("/home", { replace: true });
   };
 
   return (
