@@ -147,34 +147,35 @@ const TournamentCard = ({ tournament: t, index, userId }: { tournament: Tourname
     return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
   };
 
+  const meta = CATEGORY_META[t.category];
+  const accent = meta.color;
+
   return (
-    <div className="animate-float-up rounded border border-primary/50 bg-card/60 overflow-hidden glow-soft" style={{ animationDelay: `${index * 0.1}s` }}>
-      <div className="relative h-40 overflow-hidden">
-        <img src={t.banner_url || banner} alt={t.title} className="h-full w-full object-cover" loading="lazy" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-3">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-primary/80">[ {CATEGORY_META[t.category]?.title} ]</div>
-          <h2 className="font-display text-lg font-black uppercase tracking-wider text-foreground text-glow">{t.title}</h2>
+    <div className="animate-float-up overflow-hidden rounded-sm border bg-card/65 transition-all duration-200 hover:-translate-y-0.5" style={{ borderColor: accent, boxShadow: `0 0 16px ${meta.colorSoft}`, animationDelay: `${index * 0.1}s` }}>
+      <div className="flex gap-3 p-3">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border bg-background/50" style={{ borderColor: accent, color: accent, boxShadow: `inset 0 0 12px ${meta.colorSoft}` }}>
+          <Swords className="h-7 w-7" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] uppercase tracking-[0.28em]" style={{ color: accent }}>{meta.title}</p>
+          <h2 className="truncate font-display text-base font-black uppercase tracking-wider text-foreground text-glow">{t.title}</h2>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{meta.subtitle}</p>
         </div>
         {joined && (
-          <div className="absolute top-3 right-3 flex items-center gap-1 rounded border border-primary/60 bg-primary/20 px-2 py-1 text-[10px] uppercase tracking-widest text-primary text-glow backdrop-blur">
+          <div className="flex h-fit items-center gap-1 rounded-sm border px-2 py-1 text-[9px] uppercase tracking-widest" style={{ borderColor: accent, color: accent, backgroundColor: meta.colorSoft }}>
             <CheckCircle className="h-3 w-3" /> Joined
           </div>
         )}
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="px-3 pb-3 space-y-3">
         <div className="grid grid-cols-2 gap-2">
-          <InfoCell icon={<Calendar className="h-3.5 w-3.5" />} label="Date" value={date.toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })} />
-          <InfoCell icon={<Clock className="h-3.5 w-3.5" />} label="Time" value={formatTime12(date)} />
-          <InfoCell icon={<Coins className="h-3.5 w-3.5" />} label="Entry" value={t.entry_fee === 0 ? "FREE" : `${t.entry_fee} coins`} />
-          <InfoCell icon={<Users className="h-3.5 w-3.5" />} label="Slots" value={`${count} / ${t.total_slots}`} />
-        </div>
-
-        <div className="flex items-center gap-2 rounded border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
-          <Shield className="h-4 w-4 text-primary" />
-          <span className="text-muted-foreground">Level Requirement:</span>
-          <span className="font-display text-primary text-glow-soft">{t.level_requirement}+</span>
+          <InfoCell icon={<Calendar className="h-3.5 w-3.5" />} label="Date" value={date.toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })} accent={accent} />
+          <InfoCell icon={<Clock className="h-3.5 w-3.5" />} label="Time" value={formatTime12(date)} accent={accent} />
+          <InfoCell icon={<Coins className="h-3.5 w-3.5" />} label="Entry" value={t.entry_fee === 0 ? "FREE" : `${t.entry_fee} coins`} accent={accent} />
+          <InfoCell icon={<Trophy className="h-3.5 w-3.5" />} label="Prize" value={`${t.prize_pool} coins`} accent={accent} />
+          <InfoCell icon={<Users className="h-3.5 w-3.5" />} label="Players" value={`${count}/${t.total_slots}`} accent={accent} />
+          <InfoCell icon={<Shield className="h-3.5 w-3.5" />} label="Level" value={`${t.level_requirement}+`} accent={accent} />
         </div>
 
         <SystemPanel title="Instructions">
