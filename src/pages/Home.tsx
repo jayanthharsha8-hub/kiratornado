@@ -8,7 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wallet, Swords, Crosshair, Users, Skull, Menu, Crown, ChevronRight, UserRound } from "lucide-react";
+import { Wallet, Menu, Crown, ChevronRight } from "lucide-react";
 import { Particles } from "@/components/Particles";
 import { playSound } from "@/hooks/useSound";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
@@ -18,41 +18,12 @@ type CategoryCardImage = { category: Category; card_image_url: string | null };
 
 const db = supabase as any;
 
-const ICONS: Record<Category, JSX.Element> = {
-  free_match: <Crosshair className="h-5 w-5" strokeWidth={2} />,
-  battle_royale: <Swords className="h-5 w-5" strokeWidth={2} />,
-  classic_squad: <Users className="h-5 w-5" strokeWidth={2} />,
-  lone_wolf: <Skull className="h-5 w-5" strokeWidth={2} />,
-};
-
-const CARD_TITLES: Record<Category, string> = {
-  free_match: "FREE MATCHES",
-  battle_royale: "BATTLE ROYALE",
-  classic_squad: "CLASSIC SQUAD",
-  lone_wolf: "LONE WOLF",
-};
-
-const CARD_SUBTEXT: Record<Category, string> = {
-  free_match: "Daily • Free Entry",
-  battle_royale: "Solo • Survival Mode",
-  classic_squad: "4v4 • Squad Battles",
-  lone_wolf: "2v2 • Unlimited Duels",
-};
-
-const randomLiveCounts = () => ({
-  free_match: Math.floor(Math.random() * 151) + 50,
-  battle_royale: Math.floor(Math.random() * 151) + 50,
-  classic_squad: Math.floor(Math.random() * 151) + 50,
-  lone_wolf: Math.floor(Math.random() * 151) + 50,
-}) as Record<Category, number>;
-
 const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [coins, setCoins] = useState(0);
   
   const [playerName, setPlayerName] = useState("Hunter");
-  const [liveCounts, setLiveCounts] = useState<Record<Category, number>>(randomLiveCounts);
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [homeBanners, setHomeBanners] = useState<HomeBanner[]>([]);
@@ -63,11 +34,6 @@ const Home = () => {
     supabase.from("profiles").select("coins,player_name").eq("id", user.id).maybeSingle()
       .then(({ data }) => { if (data) { setCoins(data.coins); setPlayerName(data.player_name); } });
   }, [user]);
-
-  useEffect(() => {
-    const timer = setInterval(() => setLiveCounts(randomLiveCounts()), 3000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     Promise.all([
