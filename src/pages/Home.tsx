@@ -102,21 +102,18 @@ const Home = () => {
 
       <main className="mx-auto max-w-md space-y-3 px-3 pt-3">
         {/* Banner Carousel */}
-         <section className="relative left-1/2 w-[min(calc(100vw-24px),33.6rem)] -translate-x-1/2 animate-float-up">
-          <div
-             className="relative overflow-hidden rounded-sm border border-primary/60 glow-soft"
-          >
+        <section className="relative w-full animate-float-up">
+          <div className="relative overflow-hidden rounded-sm border border-primary/60">
             <Carousel setApi={setApi} opts={{ loop: true }}>
               <CarouselContent>
                 {sliderItems.map((banner, i) => (
                   <CarouselItem key={banner.id}>
-                     <div className="relative h-28 w-full sm:h-32">
+                    <div className="relative h-[8.25rem] w-full sm:h-[9.25rem]">
                        {banner.image_url ? (
-                         <img src={banner.image_url} alt={banner.title || "Home banner"} width={1280} height={640} className="h-full w-full object-cover contrast-125 brightness-110" />
+                         <img src={banner.image_url} alt={banner.title || "Home banner"} width={1280} height={480} className="h-full w-full object-cover" />
                        ) : (
                          <div className="flex h-full w-full items-center justify-center bg-card text-xs uppercase tracking-[0.3em] text-muted-foreground">No Banner</div>
                        )}
-                      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
                        <div className="absolute inset-y-0 left-0 flex w-2/3 flex-col justify-center p-3">
                          <p className="text-[9px] uppercase tracking-[0.24em] text-primary/90">[ System Welcome ]</p>
                          <h2 className="font-display text-base font-black uppercase tracking-wider text-foreground text-glow">
