@@ -12,11 +12,11 @@ import { Wallet, Swords, Crosshair, Users, Skull, Menu, Crown, ChevronRight, Use
 import { Particles } from "@/components/Particles";
 import { playSound } from "@/hooks/useSound";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
-import bannerShadowArmy from "@/assets/banner-shadow-army.jpg";
-import bannerHunter from "@/assets/banner-hunter.jpg";
-import bannerMonarch from "@/assets/banner-monarch.jpg";
-import bannerArena from "@/assets/banner-arena.jpg";
-import bannerFF from "@/assets/banner-ff.jpg";
+
+type HomeBanner = { id: string; image_url: string | null; title: string; subtitle: string; button_text: string | null };
+type CategoryCardImage = { category: Category; card_image_url: string | null };
+
+const db = supabase as any;
 
 const ICONS: Record<Category, JSX.Element> = {
   free_match: <Crosshair className="h-5 w-5" strokeWidth={2} />,
@@ -55,6 +55,8 @@ const Home = () => {
   const [liveCounts, setLiveCounts] = useState<Record<Category, number>>(randomLiveCounts);
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
+  const [homeBanners, setHomeBanners] = useState<HomeBanner[]>([]);
+  const [categoryImages, setCategoryImages] = useState<Record<Category, string | null>>({ free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null });
 
   useEffect(() => {
     if (!user) return;
@@ -68,6 +70,18 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
+    Promise.all([
+      db.from("home_banners").select("id,image_url,title,subtitle,button_text").eq("active", true).order("sort_order", { ascending: true }).order("created_at", { ascending: false }),
+      db.from("category_card_images").select("category,card_image_url"),
+    ]).then(([home, cards]) => {
+      setHomeBanners((home.data ?? []) as HomeBanner[]);
+      const next = { free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null } as Record<Category, string | null>;
+      ((cards.data ?? []) as CategoryCardImage[]).forEach((row) => { next[row.category] = row.card_image_url; });
+      setCategoryImages(next);
+    });
+  }, []);
+
+  useEffect(() => {
     if (!api) return;
     setCurrent(api.selectedScrollSnap());
     api.on("select", () => setCurrent(api.selectedScrollSnap()));
@@ -75,7 +89,7 @@ const Home = () => {
     return () => clearInterval(t);
   }, [api]);
 
-  const banners = [bannerShadowArmy, bannerHunter, bannerMonarch, bannerArena, bannerFF];
+  const sliderItems = homeBanners.length > 0 ? homeBanners : [{ id: "empty", image_url: null, title: "No Banner", subtitle: "", button_text: null }];
 
   const openTournamentPage = async (category: Category) => {
     playSound("pulse");
@@ -128,19 +142,24 @@ const Home = () => {
           >
             <Carousel setApi={setApi} opts={{ loop: true }}>
               <CarouselContent>
-                {banners.map((src, i) => (
-                  <CarouselItem key={i}>
+                {sliderItems.map((banner, i) => (
+                  <CarouselItem key={banner.id}>
                      <div className="relative h-28 w-full sm:h-32">
-                       <img src={src} alt="Hunter banner" width={1280} height={640} className="h-full w-full object-cover contrast-125 brightness-110" />
+                       {banner.image_url ? (
+                         <img src={banner.image_url} alt={banner.title || "Home banner"} width={1280} height={640} className="h-full w-full object-cover contrast-125 brightness-110" />
+                       ) : (
+                         <div className="flex h-full w-full items-center justify-center bg-card text-xs uppercase tracking-[0.3em] text-muted-foreground">No Banner</div>
+                       )}
                       <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
                        <div className="absolute inset-y-0 left-0 flex w-2/3 flex-col justify-center p-3">
                          <p className="text-[9px] uppercase tracking-[0.24em] text-primary/90">[ System Welcome ]</p>
                          <h2 className="font-display text-base font-black uppercase tracking-wider text-foreground text-glow">
-                          WELCOME <span className="text-primary">HUNTER</span>
+                          {banner.title || "No Banner"}
                         </h2>
                          <p className="mt-1 text-[11px] text-muted-foreground">
-                          Hunter <span className="text-primary">{playerName}</span> -- choose your arena.
+                          {banner.subtitle || <>Hunter <span className="text-primary">{playerName}</span> -- choose your arena.</>}
                         </p>
+                        {banner.button_text && <span className="mt-2 w-fit rounded-sm border border-primary/50 bg-primary/10 px-2 py-1 text-[9px] uppercase tracking-widest text-primary">{banner.button_text}</span>}
                       </div>
                     </div>
                   </CarouselItem>
@@ -150,7 +169,7 @@ const Home = () => {
           </div>
           {/* Slider dots */}
           <div className="mt-2 flex items-center justify-center gap-1.5">
-            {banners.map((_, i) => (
+            {sliderItems.map((_, i) => (
               <button
                 key={i}
                 aria-label={`Slide ${i + 1}`}
@@ -184,14 +203,18 @@ const Home = () => {
                   }}
                 >
                   <div className="absolute inset-0 overflow-hidden">
-                    <img
-                      src={meta.image}
-                      alt={meta.title}
-                      loading="lazy"
-                      width={512}
-                      height={256}
-                      className="absolute inset-0 h-full w-full object-cover brightness-110 contrast-125 saturate-125 transition duration-500 group-hover:scale-110"
-                    />
+                    {categoryImages[c] ? (
+                      <img
+                        src={categoryImages[c]!}
+                        alt={meta.title}
+                        loading="lazy"
+                        width={512}
+                        height={512}
+                        className="absolute inset-0 h-full w-full object-cover brightness-110 contrast-125 saturate-125 transition duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-card text-[10px] uppercase tracking-[0.22em] text-muted-foreground">No Banner</div>
+                    )}
                     <div
                       className="absolute inset-0"
                       style={{ background: `linear-gradient(180deg, ${meta.colorSoft} 0%, hsl(var(--background) / 0.42) 42%, hsl(var(--background) / 0.88) 100%)` }}
