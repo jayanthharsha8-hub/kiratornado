@@ -5,20 +5,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Particles } from "@/components/Particles";
 import { BottomNav } from "@/components/BottomNav";
+import { TransactionList, type WalletTransaction } from "@/components/TransactionList";
 import { playSound } from "@/hooks/useSound";
 import { toast } from "sonner";
-
-const ADD_AMOUNTS = [30, 50, 100];
 
 const WalletPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [coins, setCoins] = useState(0);
+  const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
 
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("coins").eq("id", user.id).maybeSingle()
       .then(({ data }) => { if (data) setCoins(data.coins); });
+    (supabase.from("transactions" as any) as any)
+      .select("id,type,amount,message,status,created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(5)
+      .then(({ data }: { data: WalletTransaction[] | null }) => setTransactions(data ?? []));
     const channel = supabase
       .channel(`wallet-balance-${user.id}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` }, (payload) => {
@@ -61,40 +67,21 @@ const WalletPage = () => {
           </p>
         </section>
 
-        {/* Two action cards */}
-        <section className="space-y-3">
-          <div className="rounded-sm border border-primary/40 bg-card/60 p-3 glow-soft">
-            <div className="flex items-center gap-3 text-left">
-            <div className="flex h-9 w-9 items-center justify-center rounded-sm border border-primary/40 bg-primary/10 text-primary">
-              <Plus className="h-5 w-5" strokeWidth={2} />
-            </div>
-            <div className="flex-1">
-              <p className="font-display text-xs font-bold uppercase tracking-widest text-foreground">Add Coins</p>
-              <p className="text-[11px] text-muted-foreground">Top up your wallet instantly</p>
-            </div>
-            </div>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {ADD_AMOUNTS.map((amount) => (
-                <button key={amount} onClick={() => addCoins(amount)} className="rounded-sm border border-primary/50 bg-primary/10 py-2 font-display text-xs font-bold text-primary transition hover:bg-primary/20 active:glow-soft">
-                  +{amount}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={() => go("/wallet/withdraw")}
-            className="flex w-full items-center gap-3 rounded-sm border border-primary/40 bg-card/60 p-3 text-left transition hover:border-primary hover:glow-soft active:scale-[0.99]"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-sm border border-primary/40 bg-primary/10 text-primary">
-              <PlayCircle className="h-5 w-5" strokeWidth={1.5} />
-            </div>
-            <div className="flex-1">
-              <p className="font-display text-xs font-bold uppercase tracking-widest text-foreground">Withdraw</p>
-              <p className="text-[11px] text-muted-foreground">Redeem or UPI withdrawal</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-primary/70" />
+        <section className="grid grid-cols-2 gap-3">
+          <button onClick={() => addCoins(30)} className="flex h-14 items-center justify-center gap-2 border border-primary/70 bg-transparent font-display text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-primary/5 active:scale-[0.97] active:glow-soft">
+            <Plus className="h-4 w-4" /> Add Coins
           </button>
+          <button onClick={() => go("/wallet/withdraw")} className="flex h-14 items-center justify-center gap-2 border border-primary/70 bg-transparent font-display text-xs font-bold uppercase tracking-widest text-primary transition hover:bg-primary/5 active:scale-[0.97] active:glow-soft">
+            <PlayCircle className="h-4 w-4" /> Withdraw
+          </button>
+        </section>
+
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground">HISTORY HERE</h2>
+            <button onClick={() => go("/wallet/history")} className="flex items-center gap-1 text-xs text-primary">View All <ChevronRight className="h-3 w-3" /></button>
+          </div>
+          <TransactionList items={transactions} />
         </section>
 
         <p className="pt-2 text-center text-[10px] uppercase tracking-[0.3em] text-muted-foreground">

@@ -53,7 +53,7 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [history, setHistory] = useState<MatchHistory[]>([]);
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ player_name: "", ff_uid: "" });
+  const [editForm, setEditForm] = useState({ player_name: "", ff_uid: "", player_level: "1" });
   const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
@@ -64,7 +64,7 @@ const ProfilePage = () => {
       .then(({ data }) => {
         if (data) {
           setProfile(data as Profile);
-          setEditForm({ player_name: data.player_name, ff_uid: data.ff_uid });
+          setEditForm({ player_name: data.player_name, ff_uid: data.ff_uid, player_level: String(data.player_level) });
         }
       });
 
@@ -84,13 +84,16 @@ const ProfilePage = () => {
 
   const saveEdit = async () => {
     if (!user || !editForm.player_name.trim()) { toast.error("Player name required"); return; }
+    const nextLevel = Number(editForm.player_level);
+    if (!Number.isInteger(nextLevel) || nextLevel < 1 || nextLevel > 100) { toast.error("Level must be a number from 1 to 100"); return; }
     await supabase.from("profiles").update({
       player_name: editForm.player_name.trim(),
       ff_uid: editForm.ff_uid.trim(),
+      player_level: nextLevel,
     }).eq("id", user.id);
     toast.success("Profile updated");
     setEditOpen(false);
-    setProfile(p => p ? { ...p, ...editForm } : p);
+    setProfile(p => p ? { ...p, player_name: editForm.player_name.trim(), ff_uid: editForm.ff_uid.trim(), player_level: nextLevel } : p);
   };
 
   if (!profile) return (
@@ -224,6 +227,10 @@ const ProfilePage = () => {
             <div>
               <Label className="text-xs uppercase tracking-widest text-muted-foreground">Free Fire UID</Label>
               <Input value={editForm.ff_uid} onChange={e => setEditForm(p => ({ ...p, ff_uid: e.target.value }))} className="border-primary/30 bg-card" />
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-widest text-muted-foreground">Player Level</Label>
+              <Input type="number" min={1} max={100} inputMode="numeric" value={editForm.player_level} onChange={e => setEditForm(p => ({ ...p, player_level: e.target.value }))} className="border-primary/30 bg-card" />
             </div>
             <Button onClick={saveEdit} className="w-full bg-primary font-display text-xs uppercase tracking-widest text-primary-foreground hover:bg-primary-glow">Save Changes</Button>
           </div>

@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Home from "./pages/Home";
+import BattleRoyalePage from "./pages/BattleRoyalePage";
 import TournamentDetails from "./pages/TournamentDetails";
 import TournamentSlots from "./pages/TournamentSlots";
 import CategoryPage from "./pages/CategoryPage";
@@ -25,6 +26,7 @@ import WalletWithdraw from "./pages/WalletWithdraw";
 import WalletRedeem from "./pages/WalletRedeem";
 import WalletRedeemConfirm from "./pages/WalletRedeemConfirm";
 import WalletUpi from "./pages/WalletUpi";
+import TransactionHistory from "./pages/TransactionHistory";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminTournaments from "./pages/admin/Tournaments";
 import AdminPlayers from "./pages/admin/Players";
@@ -52,6 +54,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/battle-royale" element={<ProtectedRoute><BattleRoyalePage /></ProtectedRoute>} />
             <Route path="/category/:category" element={<ProtectedRoute><CategoryPage /></ProtectedRoute>} />
             <Route path="/tournament/:id" element={<ProtectedRoute><TournamentDetails /></ProtectedRoute>} />
             <Route path="/tournament-slots/:id" element={<ProtectedRoute><TournamentSlots /></ProtectedRoute>} />
@@ -62,6 +65,7 @@ const App = () => (
             <Route path="/wallet/redeem" element={<ProtectedRoute><WalletRedeem /></ProtectedRoute>} />
             <Route path="/wallet/redeem/confirm" element={<ProtectedRoute><WalletRedeemConfirm /></ProtectedRoute>} />
             <Route path="/wallet/upi" element={<ProtectedRoute><WalletUpi /></ProtectedRoute>} />
+            <Route path="/wallet/history" element={<ProtectedRoute><TransactionHistory /></ProtectedRoute>} />
             {/* Admin routes */}
             <Route path="/admin" element={<AdminRoute><AdminLayout><AdminDashboard /></AdminLayout></AdminRoute>} />
             <Route path="/admin/tournaments" element={<AdminRoute><AdminLayout><AdminTournaments /></AdminLayout></AdminRoute>} />
