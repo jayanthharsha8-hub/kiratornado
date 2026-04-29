@@ -8,7 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wallet, Swords, Crosshair, Users, Skull, Menu, Crown, ChevronRight, UserRound } from "lucide-react";
+import { Wallet, Menu, Crown, ChevronRight } from "lucide-react";
 import { Particles } from "@/components/Particles";
 import { playSound } from "@/hooks/useSound";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
@@ -18,41 +18,12 @@ type CategoryCardImage = { category: Category; card_image_url: string | null };
 
 const db = supabase as any;
 
-const ICONS: Record<Category, JSX.Element> = {
-  free_match: <Crosshair className="h-5 w-5" strokeWidth={2} />,
-  battle_royale: <Swords className="h-5 w-5" strokeWidth={2} />,
-  classic_squad: <Users className="h-5 w-5" strokeWidth={2} />,
-  lone_wolf: <Skull className="h-5 w-5" strokeWidth={2} />,
-};
-
-const CARD_TITLES: Record<Category, string> = {
-  free_match: "FREE MATCHES",
-  battle_royale: "BATTLE ROYALE",
-  classic_squad: "CLASSIC SQUAD",
-  lone_wolf: "LONE WOLF",
-};
-
-const CARD_SUBTEXT: Record<Category, string> = {
-  free_match: "Daily • Free Entry",
-  battle_royale: "Solo • Survival Mode",
-  classic_squad: "4v4 • Squad Battles",
-  lone_wolf: "2v2 • Unlimited Duels",
-};
-
-const randomLiveCounts = () => ({
-  free_match: Math.floor(Math.random() * 151) + 50,
-  battle_royale: Math.floor(Math.random() * 151) + 50,
-  classic_squad: Math.floor(Math.random() * 151) + 50,
-  lone_wolf: Math.floor(Math.random() * 151) + 50,
-}) as Record<Category, number>;
-
 const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [coins, setCoins] = useState(0);
   
   const [playerName, setPlayerName] = useState("Hunter");
-  const [liveCounts, setLiveCounts] = useState<Record<Category, number>>(randomLiveCounts);
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [homeBanners, setHomeBanners] = useState<HomeBanner[]>([]);
@@ -63,11 +34,6 @@ const Home = () => {
     supabase.from("profiles").select("coins,player_name").eq("id", user.id).maybeSingle()
       .then(({ data }) => { if (data) { setCoins(data.coins); setPlayerName(data.player_name); } });
   }, [user]);
-
-  useEffect(() => {
-    const timer = setInterval(() => setLiveCounts(randomLiveCounts()), 3000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -136,7 +102,7 @@ const Home = () => {
 
       <main className="mx-auto max-w-md space-y-3 px-3 pt-3">
         {/* Banner Carousel */}
-         <section className="animate-float-up">
+         <section className="relative left-1/2 w-[min(calc(100vw-24px),33.6rem)] -translate-x-1/2 animate-float-up">
           <div
              className="relative overflow-hidden rounded-sm border border-primary/60 glow-soft"
           >
@@ -190,70 +156,29 @@ const Home = () => {
            <div className="grid grid-cols-2 gap-2">
             {(Object.keys(CATEGORY_META) as Category[]).map((c, idx) => {
               const meta = CATEGORY_META[c];
-              const live = liveCounts[c];
               return (
                 <button
                   key={c}
                   onClick={() => openTournamentPage(c)}
-                  className="group relative aspect-square overflow-hidden rounded-sm border bg-card text-left transition-all duration-200 hover:scale-[1.015] active:scale-[0.97] animate-float-up"
+                  className="group relative aspect-square overflow-hidden rounded-sm border bg-card text-left transition-all duration-200 hover:scale-[1.01] active:scale-[0.98] animate-float-up"
                   style={{
                     borderColor: meta.color,
-                    boxShadow: `0 0 8px ${meta.colorSoft}, inset 0 0 14px ${meta.colorSoft}`,
+                    boxShadow: `0 0 8px ${meta.colorSoft}`,
                     animationDelay: `${idx * 0.05}s`,
                   }}
                 >
-                  <div className="absolute inset-0 overflow-hidden">
-                    {categoryImages[c] ? (
-                      <img
-                        src={categoryImages[c]!}
-                        alt={meta.title}
-                        loading="lazy"
-                        width={512}
-                        height={512}
-                        className="absolute inset-0 h-full w-full object-cover brightness-110 contrast-125 saturate-125 transition duration-500 group-hover:scale-110"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-card text-[10px] uppercase tracking-[0.22em] text-muted-foreground">No Banner</div>
-                    )}
-                    <div
-                      className="absolute inset-0"
-                      style={{ background: `linear-gradient(180deg, ${meta.colorSoft} 0%, hsl(var(--background) / 0.42) 42%, hsl(var(--background) / 0.88) 100%)` }}
+                  {categoryImages[c] ? (
+                    <img
+                      src={categoryImages[c]!}
+                      alt={meta.title}
+                      loading="lazy"
+                      width={512}
+                      height={512}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
                     />
-                  </div>
-
-                  <div className="relative z-10 flex h-full flex-col items-center justify-between px-2.5 py-3 text-center">
-                    <div className="flex h-10 items-center justify-center" style={{ color: meta.color, filter: `brightness(1.15) drop-shadow(0 0 7px ${meta.color})` }}>
-                      {ICONS[c]}
-                    </div>
-
-                    <div className="flex flex-1 flex-col items-center justify-center gap-1">
-                      <div
-                        className="font-display text-sm font-black uppercase leading-tight tracking-wider text-foreground"
-                        style={{ textShadow: `0 0 8px ${meta.color}` }}
-                      >
-                        {CARD_TITLES[c]}
-                      </div>
-                      <div
-                        className="text-[10px] font-semibold leading-none text-foreground/80"
-                        style={{ textShadow: `0 0 7px ${meta.color}` }}
-                      >
-                        {CARD_SUBTEXT[c]}
-                      </div>
-                    </div>
-
-                    <span
-                      key={live}
-                      className="inline-flex items-center gap-1 rounded-sm border px-2 py-1 text-[9px] font-semibold text-success transition animate-float-up"
-                      style={{
-                        borderColor: meta.color,
-                        backgroundColor: "hsl(var(--background) / 0.72)",
-                        boxShadow: `0 0 6px ${meta.colorSoft}`,
-                      }}
-                    >
-                      <UserRound className="h-3 w-3" strokeWidth={2.2} />
-                      Live: {live}
-                    </span>
-                  </div>
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-card text-[10px] uppercase tracking-[0.22em] text-muted-foreground">No Banner</div>
+                  )}
                 </button>
               );
             })}
