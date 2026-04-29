@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { ReportDialog } from "@/components/ReportDialog";
 import { BottomNav } from "@/components/BottomNav";
 
+const ADMIN_EMAIL = "jayanthharsha8@gmail.com";
+
 interface Profile {
   username: string; player_name: string; ff_uid: string; player_level: number;
   coins: number; matches_played: number; wins: number; total_kills: number; avatar_url: string | null;
@@ -158,6 +160,12 @@ const ProfilePage = () => {
               <span className="text-muted-foreground">Coins:</span> <span className="text-primary">{profile.coins}</span>
             </div>
           </div>
+
+          {user?.email === ADMIN_EMAIL && (
+            <Button onClick={() => navigate("/admin")} className="mt-4 w-full bg-primary font-display text-xs uppercase tracking-[0.24em] text-primary-foreground hover:bg-primary-glow">
+              ADMIN PANEL
+            </Button>
+          )}
         </div>
 
         {/* Stats */}

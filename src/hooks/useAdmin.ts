@@ -10,9 +10,10 @@ export const useAdmin = () => {
   useEffect(() => {
     if (authLoading) return;
     if (!user) { setLoading(false); return; }
-    if (user.email !== "jayanthharsha8@gmail.com") { setIsAdmin(false); setLoading(false); return; }
-    supabase.rpc("has_role", { _user_id: user.id, _role: "admin" })
-      .then(({ data }) => { setIsAdmin(!!data); setLoading(false); });
+    const allowed = user.email === "jayanthharsha8@gmail.com";
+    setIsAdmin(allowed);
+    setLoading(false);
+    if (allowed) supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
   }, [user, authLoading]);
 
   return { isAdmin, loading, user };

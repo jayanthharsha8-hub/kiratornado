@@ -4,11 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { SystemPanel } from "@/components/SystemPanel";
 import { Logo } from "@/components/Logo";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Clock, Coins, Users, Shield, Copy, Lock, CheckCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Coins, Users, Shield, Copy, Lock, CheckCircle, Trophy, Swords } from "lucide-react";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import { toast } from "sonner";
-import banner from "@/assets/banner-ff.jpg";
 
 interface Tournament {
   id: string; title: string; category: Category; entry_fee: number; total_slots: number;
@@ -25,24 +23,29 @@ const CategoryPage = () => {
   const [tab, setTab] = useState<Tab>("upcoming");
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageBannerUrl, setPageBannerUrl] = useState<string | null>(null);
 
   const cat = category as Category;
   const meta = CATEGORY_META[cat];
 
   useEffect(() => {
     if (!cat || !meta) return;
-    setLoading(true);
-    supabase
-      .from("tournaments")
-      .select("*")
-      .eq("category", cat)
-      .eq("status", tab as "upcoming" | "live" | "completed")
-      .eq("published", true)
-      .order("scheduled_at", { ascending: tab !== "completed" })
-      .then(({ data }) => {
+    (async () => {
+      setLoading(true);
+      const [{ data }, { data: pageBanner }] = await Promise.all([
+        supabase
+          .from("tournaments")
+          .select("*")
+          .eq("category", cat)
+          .eq("status", tab as "upcoming" | "live" | "completed")
+          .eq("published", true)
+          .order("scheduled_at", { ascending: tab !== "completed" }),
+        (supabase as any).from("tournament_page_banners").select("banner_image_url").eq("category", cat).maybeSingle(),
+      ]);
+      setPageBannerUrl(pageBanner?.banner_image_url ?? null);
         setTournaments((data ?? []) as Tournament[]);
         setLoading(false);
-      });
+    })();
   }, [cat, tab]);
 
   if (!meta) return <div className="flex min-h-screen items-center justify-center text-xs uppercase tracking-[0.4em] text-primary text-glow">Invalid category</div>;
@@ -61,9 +64,19 @@ const CategoryPage = () => {
       </header>
 
       <main className="mx-auto max-w-md space-y-5 px-4 pt-5">
+        <section className="animate-float-up overflow-hidden rounded-sm border bg-card/50" style={{ borderColor: meta.color, boxShadow: `0 0 14px ${meta.colorSoft}` }}>
+          <div className="relative aspect-[16/6] w-full">
+            {pageBannerUrl ? (
+              <img src={pageBannerUrl} alt={`${meta.title} banner`} className="h-full w-full object-cover" loading="lazy" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-card text-xs uppercase tracking-[0.3em] text-muted-foreground">No Banner</div>
+            )}
+          </div>
+        </section>
+
         <div className="animate-float-up text-center">
           <p className="text-[10px] uppercase tracking-[0.4em] text-primary/80">[ Tournament Mode ]</p>
-          <h1 className="font-display text-2xl font-black uppercase tracking-[0.2em] text-primary text-glow">{meta.title}</h1>
+          <h1 className="font-display text-2xl font-black uppercase tracking-[0.2em]" style={{ color: meta.color, textShadow: `0 0 10px ${meta.colorSoft}` }}>{meta.title}</h1>
           <p className="text-xs text-muted-foreground mt-1">{meta.subtitle}</p>
         </div>
 
@@ -74,9 +87,10 @@ const CategoryPage = () => {
               onClick={() => setTab(t)}
               className={`flex-1 rounded border py-2.5 text-xs font-display uppercase tracking-[0.2em] transition-all ${
                 tab === t
-                  ? "border-primary bg-primary/20 text-primary text-glow glow-soft"
-                  : "border-primary/30 bg-card/40 text-muted-foreground hover:border-primary/60 hover:text-primary"
+                  ? "text-glow glow-soft"
+                  : "bg-card/40 text-muted-foreground"
               }`}
+              style={{ borderColor: tab === t ? meta.color : `${meta.color}55`, backgroundColor: tab === t ? meta.colorSoft : undefined, color: tab === t ? meta.color : undefined }}
             >
               {t === "live" ? "Ongoing" : t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
@@ -133,34 +147,35 @@ const TournamentCard = ({ tournament: t, index, userId }: { tournament: Tourname
     return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
   };
 
+  const meta = CATEGORY_META[t.category];
+  const accent = meta.color;
+
   return (
-    <div className="animate-float-up rounded border border-primary/50 bg-card/60 overflow-hidden glow-soft" style={{ animationDelay: `${index * 0.1}s` }}>
-      <div className="relative h-40 overflow-hidden">
-        <img src={t.banner_url || banner} alt={t.title} className="h-full w-full object-cover" loading="lazy" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-3">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-primary/80">[ {CATEGORY_META[t.category]?.title} ]</div>
-          <h2 className="font-display text-lg font-black uppercase tracking-wider text-foreground text-glow">{t.title}</h2>
+    <div className="animate-float-up overflow-hidden rounded-sm border bg-card/65 transition-all duration-200 hover:-translate-y-0.5" style={{ borderColor: accent, boxShadow: `0 0 16px ${meta.colorSoft}`, animationDelay: `${index * 0.1}s` }}>
+      <div className="flex gap-3 p-3">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border bg-background/50" style={{ borderColor: accent, color: accent, boxShadow: `inset 0 0 12px ${meta.colorSoft}` }}>
+          <Swords className="h-7 w-7" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] uppercase tracking-[0.28em]" style={{ color: accent }}>{meta.title}</p>
+          <h2 className="truncate font-display text-base font-black uppercase tracking-wider text-foreground text-glow">{t.title}</h2>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{meta.subtitle}</p>
         </div>
         {joined && (
-          <div className="absolute top-3 right-3 flex items-center gap-1 rounded border border-primary/60 bg-primary/20 px-2 py-1 text-[10px] uppercase tracking-widest text-primary text-glow backdrop-blur">
+          <div className="flex h-fit items-center gap-1 rounded-sm border px-2 py-1 text-[9px] uppercase tracking-widest" style={{ borderColor: accent, color: accent, backgroundColor: meta.colorSoft }}>
             <CheckCircle className="h-3 w-3" /> Joined
           </div>
         )}
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="px-3 pb-3 space-y-3">
         <div className="grid grid-cols-2 gap-2">
-          <InfoCell icon={<Calendar className="h-3.5 w-3.5" />} label="Date" value={date.toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })} />
-          <InfoCell icon={<Clock className="h-3.5 w-3.5" />} label="Time" value={formatTime12(date)} />
-          <InfoCell icon={<Coins className="h-3.5 w-3.5" />} label="Entry" value={t.entry_fee === 0 ? "FREE" : `${t.entry_fee} coins`} />
-          <InfoCell icon={<Users className="h-3.5 w-3.5" />} label="Slots" value={`${count} / ${t.total_slots}`} />
-        </div>
-
-        <div className="flex items-center gap-2 rounded border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
-          <Shield className="h-4 w-4 text-primary" />
-          <span className="text-muted-foreground">Level Requirement:</span>
-          <span className="font-display text-primary text-glow-soft">{t.level_requirement}+</span>
+          <InfoCell icon={<Calendar className="h-3.5 w-3.5" />} label="Date" value={date.toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })} accent={accent} />
+          <InfoCell icon={<Clock className="h-3.5 w-3.5" />} label="Time" value={formatTime12(date)} accent={accent} />
+          <InfoCell icon={<Coins className="h-3.5 w-3.5" />} label="Entry" value={t.entry_fee === 0 ? "FREE" : `${t.entry_fee} coins`} accent={accent} />
+          <InfoCell icon={<Trophy className="h-3.5 w-3.5" />} label="Prize" value={`${t.prize_pool} coins`} accent={accent} />
+          <InfoCell icon={<Users className="h-3.5 w-3.5" />} label="Players" value={`${count}/${t.total_slots}`} accent={accent} />
+          <InfoCell icon={<Shield className="h-3.5 w-3.5" />} label="Level" value={`${t.level_requirement}+`} accent={accent} />
         </div>
 
         <SystemPanel title="Instructions">
@@ -214,12 +229,13 @@ const TournamentCard = ({ tournament: t, index, userId }: { tournament: Tourname
 
         {/* Join button redirects to slots page */}
         {!joined && t.status === "upcoming" && count < t.total_slots && (
-          <Button
+          <button
             onClick={() => navigate(`/tournament-slots/${t.id}`)}
-            className="h-14 w-full bg-primary font-display text-sm font-bold uppercase tracking-[0.3em] text-primary-foreground hover:bg-primary-glow animate-pulse-glow"
+            className="h-14 w-full rounded-sm font-display text-sm font-bold uppercase tracking-[0.3em] text-background transition active:scale-[0.98] animate-pulse-glow"
+            style={{ backgroundColor: accent, boxShadow: `0 0 18px ${meta.colorSoft}` }}
           >
-            [ Join Now ]
-          </Button>
+            JOIN NOW
+          </button>
         )}
 
         {!joined && count >= t.total_slots && t.status === "upcoming" && (
@@ -232,9 +248,9 @@ const TournamentCard = ({ tournament: t, index, userId }: { tournament: Tourname
   );
 };
 
-const InfoCell = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
-  <div className="rounded border border-primary/30 bg-card/50 p-2.5">
-    <div className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-primary/80">{icon}{label}</div>
+const InfoCell = ({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent: string }) => (
+  <div className="rounded-sm border bg-background/35 p-2.5" style={{ borderColor: `${accent}55` }}>
+    <div className="flex items-center gap-1 text-[10px] uppercase tracking-widest" style={{ color: accent }}>{icon}{label}</div>
     <div className="mt-1 text-sm text-foreground">{value}</div>
   </div>
 );

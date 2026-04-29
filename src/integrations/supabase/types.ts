@@ -307,6 +307,30 @@ export type Database = {
         }
         Relationships: []
       }
+      tournament_page_banners: {
+        Row: {
+          banner_image_url: string | null
+          category: Database["public"]["Enums"]["tournament_category"]
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          banner_image_url?: string | null
+          category: Database["public"]["Enums"]["tournament_category"]
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          banner_image_url?: string | null
+          category?: Database["public"]["Enums"]["tournament_category"]
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tournaments: {
         Row: {
           banner_url: string | null

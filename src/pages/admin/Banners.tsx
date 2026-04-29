@@ -13,6 +13,7 @@ import { toast } from "sonner";
 type HomeBanner = { id: string; image_url: string | null; title: string; subtitle: string; button_text: string | null; sort_order: number; active: boolean };
 type CategoryCardImage = { id: string; category: Category; card_image_url: string | null };
 type TournamentBanner = { id: string; tournament_id: string; banner_image_url: string | null };
+type TournamentPageBanner = { id: string; category: Category; banner_image_url: string | null };
 type TournamentRow = { id: string; title: string; category: Category; scheduled_at: string };
 
 const CATEGORIES: Category[] = ["free_match", "battle_royale", "classic_squad", "lone_wolf"];
@@ -30,6 +31,7 @@ export default function AdminBanners() {
   const [homeBanners, setHomeBanners] = useState<HomeBanner[]>([]);
   const [categoryImages, setCategoryImages] = useState<Record<Category, string | null>>({ free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null });
   const [tournamentBanners, setTournamentBanners] = useState<Record<string, string | null>>({});
+  const [pageBanners, setPageBanners] = useState<Record<Category, string | null>>({ free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null });
   const [tournaments, setTournaments] = useState<TournamentRow[]>([]);
   const [homeForm, setHomeForm] = useState({ title: "", subtitle: "", button_text: "", sort_order: 0 });
   const [selectedTournament, setSelectedTournament] = useState("");
@@ -38,10 +40,11 @@ export default function AdminBanners() {
   const selectedTournamentName = useMemo(() => tournaments.find((t) => t.id === selectedTournament)?.title ?? "Select Tournament", [selectedTournament, tournaments]);
 
   const load = async () => {
-    const [home, cards, banners, tours] = await Promise.all([
+    const [home, cards, banners, pageBannerRows, tours] = await Promise.all([
       db.from("home_banners").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false }),
       db.from("category_card_images").select("*"),
       db.from("tournament_banners").select("*"),
+      db.from("tournament_page_banners").select("*"),
       supabase.from("tournaments").select("id,title,category,scheduled_at").order("scheduled_at", { ascending: false }),
     ]);
     setHomeBanners((home.data ?? []) as HomeBanner[]);
@@ -51,6 +54,9 @@ export default function AdminBanners() {
     const tournamentMap: Record<string, string | null> = {};
     ((banners.data ?? []) as TournamentBanner[]).forEach((row) => { tournamentMap[row.tournament_id] = row.banner_image_url; });
     setTournamentBanners(tournamentMap);
+    const pageMap = { free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null } as Record<Category, string | null>;
+    ((pageBannerRows.data ?? []) as TournamentPageBanner[]).forEach((row) => { pageMap[row.category] = row.banner_image_url; });
+    setPageBanners(pageMap);
     setTournaments(((tours.data ?? []) as TournamentRow[]));
   };
 
@@ -112,11 +118,24 @@ export default function AdminBanners() {
     setSaving(false);
   };
 
+  const saveTournamentPageBanner = async (category: Category, file: File | undefined) => {
+    if (!file) { toast.error("Select a category page banner image"); return; }
+    setSaving(true);
+    try {
+      const banner_image_url = await uploadBannerImage(file, "tournament-page-banners");
+      const { error } = await db.from("tournament_page_banners").upsert({ category, banner_image_url }, { onConflict: "category" });
+      if (error) throw error;
+      toast.success("Tournament page banner saved");
+      await load();
+    } catch (error: any) { toast.error(error.message || "Upload failed"); }
+    setSaving(false);
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold uppercase tracking-widest text-primary text-glow">Banner Management</h1>
-        <p className="text-xs text-muted-foreground">Separate image systems for home slider, category cards, and tournament pages</p>
+        <p className="text-xs text-muted-foreground">Separate image systems for home slider, category cards, tournament details, and category pages</p>
       </div>
 
       <SystemPanel title="Manage Home Banners">
@@ -160,6 +179,20 @@ export default function AdminBanners() {
                 <div><h3 className="font-display text-sm uppercase tracking-widest text-primary">{CATEGORY_META[category].title}</h3><p className="text-[10px] text-muted-foreground">Square card image only</p></div>
               </div>
               <Input type="file" accept="image/*" disabled={saving} onChange={(e) => saveCategoryImage(category, e.target.files?.[0])} className="border-primary/30 bg-card" />
+            </div>
+          ))}
+        </div>
+      </SystemPanel>
+
+      <SystemPanel title="Tournament Page Banners">
+        <div className="grid gap-3 md:grid-cols-2">
+          {CATEGORIES.map((category) => (
+            <div key={category} className="rounded border border-primary/25 bg-card/40 p-3">
+              <div className="mb-3 flex items-center gap-3">
+                {pageBanners[category] ? <img src={pageBanners[category]!} alt={`${CATEGORY_META[category].title} page banner`} className="h-16 w-36 object-cover" /> : <div className="flex h-16 w-36 items-center justify-center border border-primary/25 text-[10px] text-muted-foreground">No Banner</div>}
+                <div><h3 className="font-display text-sm uppercase tracking-widest text-primary">{CATEGORY_META[category].title}</h3><p className="text-[10px] text-muted-foreground">Category page top banner 16:6</p></div>
+              </div>
+              <Input type="file" accept="image/*" disabled={saving} onChange={(e) => saveTournamentPageBanner(category, e.target.files?.[0])} className="border-primary/30 bg-card" />
             </div>
           ))}
         </div>

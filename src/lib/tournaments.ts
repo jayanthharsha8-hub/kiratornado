@@ -33,7 +33,7 @@ export const CATEGORY_META: Record<Category, CategoryTheme> = {
     rules: ["Entry Fee: 5 coins", "Slots: 50 players", "Solo players only"],
   },
   classic_squad: {
-    title: "Classic Squad",
+    title: "Clash Squad",
     subtitle: "4 vs 4 -- 8 squads",
     image: classicSquadImg,
     color: "hsl(271 91% 65%)",
