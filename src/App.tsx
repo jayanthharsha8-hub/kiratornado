@@ -29,6 +29,7 @@ import WalletUpi from "./pages/WalletUpi";
 import TransactionHistory from "./pages/TransactionHistory";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminTournaments from "./pages/admin/Tournaments";
+import AdminBanners from "./pages/admin/Banners";
 import AdminPlayers from "./pages/admin/Players";
 import AdminWallet from "./pages/admin/WalletAdmin";
 import AdminNotifications from "./pages/admin/Notifications";
@@ -69,6 +70,7 @@ const App = () => (
             {/* Admin routes */}
             <Route path="/admin" element={<AdminRoute><AdminLayout><AdminDashboard /></AdminLayout></AdminRoute>} />
             <Route path="/admin/tournaments" element={<AdminRoute><AdminLayout><AdminTournaments /></AdminLayout></AdminRoute>} />
+            <Route path="/admin/banners" element={<AdminRoute><AdminLayout><AdminBanners /></AdminLayout></AdminRoute>} />
             <Route path="/admin/players" element={<AdminRoute><AdminLayout><AdminPlayers /></AdminLayout></AdminRoute>} />
             <Route path="/admin/wallet" element={<AdminRoute><AdminLayout><AdminWallet /></AdminLayout></AdminRoute>} />
             <Route path="/admin/notifications" element={<AdminRoute><AdminLayout><AdminNotifications /></AdminLayout></AdminRoute>} />
