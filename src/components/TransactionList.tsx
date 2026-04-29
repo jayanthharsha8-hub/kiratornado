@@ -28,14 +28,14 @@ export const TransactionList = ({ items, emptyText = "No transactions yet" }: { 
         const withdraw = tx.type === "withdraw";
         const Icon = credit ? ArrowDown : withdraw ? Wallet : ArrowUp;
         return (
-          <div key={tx.id} className="flex items-center gap-3 py-3 transition active:scale-[0.99] animate-float-up">
+          <div key={tx.id} className="flex items-center gap-3 py-3 animate-float-up">
             <div
               className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-transparent",
-                credit ? "border-success text-success drop-shadow-[0_0_7px_hsl(var(--success)/0.45)]" : withdraw ? "border-primary text-primary drop-shadow-[0_0_7px_hsl(var(--primary)/0.45)]" : "border-destructive text-destructive drop-shadow-[0_0_7px_hsl(var(--destructive)/0.45)]"
+                "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-transparent",
+                credit ? "border-success/70 text-success" : withdraw ? "border-primary/70 text-primary" : "border-destructive/70 text-destructive"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-3.5 w-3.5" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold leading-tight text-foreground">{LABELS[tx.type] ?? tx.message}</p>

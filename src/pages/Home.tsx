@@ -25,34 +25,13 @@ const ICONS: Record<Category, JSX.Element> = {
   lone_wolf: <Skull className="h-5 w-5" strokeWidth={2} />,
 };
 
-const CARD_TITLES: Record<Category, string> = {
-  free_match: "FREE MATCHES",
-  battle_royale: "BATTLE ROYALE",
-  classic_squad: "CLASSIC SQUAD",
-  lone_wolf: "LONE WOLF",
-};
-
-const CARD_SUBTEXT: Record<Category, string> = {
-  free_match: "Daily • Free Entry",
-  battle_royale: "Solo • Survival Mode",
-  classic_squad: "4v4 • Squad Battles",
-  lone_wolf: "2v2 • Unlimited Duels",
-};
-
-const randomLiveCounts = () => ({
-  free_match: Math.floor(Math.random() * 151) + 50,
-  battle_royale: Math.floor(Math.random() * 151) + 50,
-  classic_squad: Math.floor(Math.random() * 151) + 50,
-  lone_wolf: Math.floor(Math.random() * 151) + 50,
-}) as Record<Category, number>;
-
 const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [coins, setCoins] = useState(0);
   
   const [playerName, setPlayerName] = useState("Hunter");
-  const [liveCounts, setLiveCounts] = useState<Record<Category, number>>(randomLiveCounts);
+  const [liveCounts, setLiveCounts] = useState<Record<Category, number>>({ free_match: 0, battle_royale: 0, classic_squad: 0, lone_wolf: 0 });
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
 
@@ -60,12 +39,13 @@ const Home = () => {
     if (!user) return;
     supabase.from("profiles").select("coins,player_name").eq("id", user.id).maybeSingle()
       .then(({ data }) => { if (data) { setCoins(data.coins); setPlayerName(data.player_name); } });
+    supabase.from("tournaments").select("category").eq("published", true).eq("status", "live")
+      .then(({ data }) => {
+        const next = { free_match: 0, battle_royale: 0, classic_squad: 0, lone_wolf: 0 } as Record<Category, number>;
+        (data ?? []).forEach((t) => { next[t.category as Category] += 1; });
+        setLiveCounts(next);
+      });
   }, [user]);
-
-  useEffect(() => {
-    const timer = setInterval(() => setLiveCounts(randomLiveCounts()), 3000);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     if (!api) return;
@@ -76,26 +56,6 @@ const Home = () => {
   }, [api]);
 
   const banners = [bannerShadowArmy, bannerHunter, bannerMonarch, bannerArena, bannerFF];
-
-  const openTournamentPage = async (category: Category) => {
-    playSound("pulse");
-    if (category === "battle_royale") {
-      navigate("/battle-royale");
-      return;
-    }
-
-    const { data } = await supabase
-      .from("tournaments")
-      .select("id")
-      .eq("category", category)
-      .eq("published", true)
-      .in("status", ["upcoming", "live"])
-      .order("scheduled_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    navigate(data?.id ? `/tournament/${data.id}` : `/category/${category}`);
-  };
 
   return (
     <div className="relative min-h-screen pb-20 scanline">
@@ -122,7 +82,7 @@ const Home = () => {
 
       <main className="mx-auto max-w-md space-y-3 px-3 pt-3">
         {/* Banner Carousel */}
-         <section className="animate-float-up">
+        <section className="animate-float-up">
           <div
              className="relative overflow-hidden rounded-sm border border-primary/60 glow-soft"
           >
@@ -130,8 +90,8 @@ const Home = () => {
               <CarouselContent>
                 {banners.map((src, i) => (
                   <CarouselItem key={i}>
-                     <div className="relative h-28 w-full sm:h-32">
-                       <img src={src} alt="Hunter banner" width={1280} height={640} className="h-full w-full object-cover contrast-125 brightness-110" />
+                     <div className="relative h-32 w-full">
+                      <img src={src} alt="Hunter banner" width={1280} height={640} className="h-full w-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
                        <div className="absolute inset-y-0 left-0 flex w-2/3 flex-col justify-center p-3">
                          <p className="text-[9px] uppercase tracking-[0.24em] text-primary/90">[ System Welcome ]</p>
@@ -167,63 +127,67 @@ const Home = () => {
         </section>
 
         {/* Tournament image cards */}
-         <SystemPanel title="Tournaments">
-           <div className="grid grid-cols-2 gap-2">
+        <SystemPanel title="Tournaments">
+          <div className="grid grid-cols-2 gap-2">
             {(Object.keys(CATEGORY_META) as Category[]).map((c, idx) => {
               const meta = CATEGORY_META[c];
               const live = liveCounts[c];
               return (
                 <button
                   key={c}
-                  onClick={() => openTournamentPage(c)}
-                  className="group relative aspect-square overflow-hidden rounded-sm border bg-card text-left transition-all duration-200 hover:scale-[1.015] active:scale-[0.97] animate-float-up"
+                  onClick={() => { playSound("pulse"); navigate(`/category/${c}`); }}
+                  className="group relative aspect-square overflow-hidden rounded-sm border bg-card text-left transition-all duration-200 hover:scale-[1.015] active:scale-[0.98] animate-float-up"
                   style={{
                     borderColor: meta.color,
                     boxShadow: `0 0 8px ${meta.colorSoft}, inset 0 0 14px ${meta.colorSoft}`,
                     animationDelay: `${idx * 0.05}s`,
                   }}
                 >
-                  <div className="absolute inset-0 overflow-hidden">
+                  {/* Top image area (~50%) */}
+                  <div className="relative h-1/2 w-full overflow-hidden">
                     <img
                       src={meta.image}
                       alt={meta.title}
                       loading="lazy"
                       width={512}
                       height={256}
-                      className="absolute inset-0 h-full w-full object-cover brightness-110 contrast-125 saturate-125 transition duration-500 group-hover:scale-110"
+                      className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-110"
                     />
                     <div
                       className="absolute inset-0"
-                      style={{ background: `linear-gradient(180deg, ${meta.colorSoft} 0%, hsl(var(--background) / 0.42) 42%, hsl(var(--background) / 0.88) 100%)` }}
+                      style={{ background: `linear-gradient(180deg, ${meta.colorSoft} 0%, rgba(5,7,13,0.55) 60%, #05070d 100%)` }}
                     />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div
+                         className="flex h-9 w-9 items-center justify-center border border-primary/40"
+                        style={{
+                          color: meta.color,
+                          background: `radial-gradient(circle, ${meta.colorSoft} 0%, transparent 70%)`,
+                          filter: `drop-shadow(0 0 6px ${meta.color})`,
+                        }}
+                      >
+                        {ICONS[c]}
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="relative z-10 flex h-full flex-col items-center justify-between px-2.5 py-3 text-center">
-                    <div className="flex h-10 items-center justify-center" style={{ color: meta.color, filter: `brightness(1.15) drop-shadow(0 0 7px ${meta.color})` }}>
-                      {ICONS[c]}
+                  {/* Bottom text area */}
+                   <div className="flex h-1/2 flex-col items-center justify-center gap-1 px-2 pb-2 text-center">
+                    <div
+                       className="font-display text-[11px] font-black uppercase leading-tight tracking-wider text-foreground"
+                      style={{ textShadow: `0 0 8px ${meta.color}` }}
+                    >
+                      {meta.title}
                     </div>
-
-                    <div className="flex flex-1 flex-col items-center justify-center gap-1">
-                      <div
-                        className="font-display text-sm font-black uppercase leading-tight tracking-wider text-foreground"
-                        style={{ textShadow: `0 0 8px ${meta.color}` }}
-                      >
-                        {CARD_TITLES[c]}
-                      </div>
-                      <div
-                        className="text-[10px] font-semibold leading-none text-foreground/80"
-                        style={{ textShadow: `0 0 7px ${meta.color}` }}
-                      >
-                        {CARD_SUBTEXT[c]}
-                      </div>
+                     <div className="text-[9px] leading-tight text-foreground/70">
+                      {meta.subtitle}
                     </div>
-
                     <span
-                      key={live}
-                      className="inline-flex items-center gap-1 rounded-sm border px-2 py-1 text-[9px] font-semibold text-success transition animate-float-up"
+                       className="mt-0.5 inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[9px] font-semibold"
                       style={{
                         borderColor: meta.color,
-                        backgroundColor: "hsl(var(--background) / 0.72)",
+                        color: meta.color,
+                        backgroundColor: "rgba(5,7,13,0.55)",
                         boxShadow: `0 0 6px ${meta.colorSoft}`,
                       }}
                     >
@@ -259,16 +223,10 @@ const Home = () => {
         </button>
       </main>
 
+      
       <BottomNav />
     </div>
   );
 };
-
-const InfoPill = ({ icon, label }: { icon: React.ReactNode; label: string }) => (
-  <div className="flex min-w-0 items-center justify-center gap-1 rounded-sm border border-foreground/10 bg-background/45 px-1.5 py-1.5">
-    <span className="shrink-0 text-foreground/60">{icon}</span>
-    <span className="truncate font-semibold">{label}</span>
-  </div>
-);
 
 export default Home;
