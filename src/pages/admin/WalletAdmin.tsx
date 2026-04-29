@@ -57,8 +57,9 @@ export default function AdminWallet() {
     const raw = amounts[p.id];
     const amt = Number(raw);
     if (!amt || amt <= 0) { toast.error("Enter a valid amount"); return; }
+    const next = Math.max(0, p.coins + delta * amt);
     setBusyId(p.id);
-    const { error } = await (supabase.rpc as any)("admin_adjust_coins", { _user_id: p.id, _amount: amt, _direction: delta });
+    const { error } = await supabase.from("profiles").update({ coins: next }).eq("id", p.id);
     setBusyId(null);
     if (error) { toast.error(error.message); return; }
     toast.success(`${delta > 0 ? "Added" : "Removed"} ${amt} coins — ${p.username}`);
@@ -66,8 +67,17 @@ export default function AdminWallet() {
     loadPlayers();
   };
   const handle = async (req: WalletReq, action: "approved" | "rejected") => {
-    const { error } = await (supabase.rpc as any)("admin_handle_wallet_request", { _request_id: req.id, _status: action });
-    if (error) { toast.error(error.message); return; }
+    await supabase.from("wallet_requests").update({ status: action }).eq("id", req.id);
+    const { data: prof } = await supabase.from("profiles").select("coins").eq("id", req.user_id).maybeSingle();
+    if (prof) {
+      if (action === "approved" && req.type === "add") {
+        // Credit coins on add approval
+        await supabase.from("profiles").update({ coins: prof.coins + req.amount }).eq("id", req.user_id);
+      } else if (action === "rejected" && req.type === "withdraw") {
+        // Refund coins (they were deducted on submit)
+        await supabase.from("profiles").update({ coins: prof.coins + req.amount }).eq("id", req.user_id);
+      }
+    }
     toast.success(`Request ${action}`);
     load();
   };

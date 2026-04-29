@@ -25,7 +25,6 @@ import WalletWithdraw from "./pages/WalletWithdraw";
 import WalletRedeem from "./pages/WalletRedeem";
 import WalletRedeemConfirm from "./pages/WalletRedeemConfirm";
 import WalletUpi from "./pages/WalletUpi";
-import TransactionHistory from "./pages/TransactionHistory";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminTournaments from "./pages/admin/Tournaments";
 import AdminPlayers from "./pages/admin/Players";
@@ -63,7 +62,6 @@ const App = () => (
             <Route path="/wallet/redeem" element={<ProtectedRoute><WalletRedeem /></ProtectedRoute>} />
             <Route path="/wallet/redeem/confirm" element={<ProtectedRoute><WalletRedeemConfirm /></ProtectedRoute>} />
             <Route path="/wallet/upi" element={<ProtectedRoute><WalletUpi /></ProtectedRoute>} />
-            <Route path="/wallet/history" element={<ProtectedRoute><TransactionHistory /></ProtectedRoute>} />
             {/* Admin routes */}
             <Route path="/admin" element={<AdminRoute><AdminLayout><AdminDashboard /></AdminLayout></AdminRoute>} />
             <Route path="/admin/tournaments" element={<AdminRoute><AdminLayout><AdminTournaments /></AdminLayout></AdminRoute>} />
