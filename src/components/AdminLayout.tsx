@@ -3,13 +3,14 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  LayoutDashboard, Trophy, Users, Wallet, Bell, LogOut, ChevronLeft, ChevronRight, Home, Award, Shield,
+  LayoutDashboard, Trophy, Users, Wallet, Bell, LogOut, ChevronLeft, ChevronRight, Home, Award, Shield, Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/admin/tournaments", icon: Trophy, label: "Tournaments" },
+  { to: "/admin/banners", icon: Images, label: "Banners" },
   { to: "/admin/players", icon: Users, label: "Players" },
   { to: "/admin/wallet", icon: Wallet, label: "Wallet" },
   { to: "/admin/leaderboard", icon: Award, label: "Leaderboard" },
