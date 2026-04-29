@@ -4,11 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { SystemPanel } from "@/components/SystemPanel";
 import { Logo } from "@/components/Logo";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Clock, Coins, Users, Shield, Copy, Lock, CheckCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Coins, Users, Shield, Copy, Lock, CheckCircle, Trophy, Swords } from "lucide-react";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import { toast } from "sonner";
-import banner from "@/assets/banner-ff.jpg";
 
 interface Tournament {
   id: string; title: string; category: Category; entry_fee: number; total_slots: number;
@@ -25,24 +23,29 @@ const CategoryPage = () => {
   const [tab, setTab] = useState<Tab>("upcoming");
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageBannerUrl, setPageBannerUrl] = useState<string | null>(null);
 
   const cat = category as Category;
   const meta = CATEGORY_META[cat];
 
   useEffect(() => {
     if (!cat || !meta) return;
-    setLoading(true);
-    supabase
-      .from("tournaments")
-      .select("*")
-      .eq("category", cat)
-      .eq("status", tab as "upcoming" | "live" | "completed")
-      .eq("published", true)
-      .order("scheduled_at", { ascending: tab !== "completed" })
-      .then(({ data }) => {
+    (async () => {
+      setLoading(true);
+      const [{ data }, { data: pageBanner }] = await Promise.all([
+        supabase
+          .from("tournaments")
+          .select("*")
+          .eq("category", cat)
+          .eq("status", tab as "upcoming" | "live" | "completed")
+          .eq("published", true)
+          .order("scheduled_at", { ascending: tab !== "completed" }),
+        (supabase as any).from("tournament_page_banners").select("banner_image_url").eq("category", cat).maybeSingle(),
+      ]);
+      setPageBannerUrl(pageBanner?.banner_image_url ?? null);
         setTournaments((data ?? []) as Tournament[]);
         setLoading(false);
-      });
+    })();
   }, [cat, tab]);
 
   if (!meta) return <div className="flex min-h-screen items-center justify-center text-xs uppercase tracking-[0.4em] text-primary text-glow">Invalid category</div>;
@@ -61,9 +64,19 @@ const CategoryPage = () => {
       </header>
 
       <main className="mx-auto max-w-md space-y-5 px-4 pt-5">
+        <section className="animate-float-up overflow-hidden rounded-sm border bg-card/50" style={{ borderColor: meta.color, boxShadow: `0 0 14px ${meta.colorSoft}` }}>
+          <div className="relative aspect-[16/6] w-full">
+            {pageBannerUrl ? (
+              <img src={pageBannerUrl} alt={`${meta.title} banner`} className="h-full w-full object-cover" loading="lazy" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-card text-xs uppercase tracking-[0.3em] text-muted-foreground">No Banner</div>
+            )}
+          </div>
+        </section>
+
         <div className="animate-float-up text-center">
           <p className="text-[10px] uppercase tracking-[0.4em] text-primary/80">[ Tournament Mode ]</p>
-          <h1 className="font-display text-2xl font-black uppercase tracking-[0.2em] text-primary text-glow">{meta.title}</h1>
+          <h1 className="font-display text-2xl font-black uppercase tracking-[0.2em]" style={{ color: meta.color, textShadow: `0 0 10px ${meta.colorSoft}` }}>{meta.title}</h1>
           <p className="text-xs text-muted-foreground mt-1">{meta.subtitle}</p>
         </div>
 
@@ -74,9 +87,10 @@ const CategoryPage = () => {
               onClick={() => setTab(t)}
               className={`flex-1 rounded border py-2.5 text-xs font-display uppercase tracking-[0.2em] transition-all ${
                 tab === t
-                  ? "border-primary bg-primary/20 text-primary text-glow glow-soft"
-                  : "border-primary/30 bg-card/40 text-muted-foreground hover:border-primary/60 hover:text-primary"
+                  ? "text-glow glow-soft"
+                  : "bg-card/40 text-muted-foreground"
               }`}
+              style={{ borderColor: tab === t ? meta.color : `${meta.color}55`, backgroundColor: tab === t ? meta.colorSoft : undefined, color: tab === t ? meta.color : undefined }}
             >
               {t === "live" ? "Ongoing" : t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
