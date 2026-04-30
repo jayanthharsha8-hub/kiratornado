@@ -101,6 +101,34 @@ const TournamentDetails = () => {
     toast.success(`${label} copied`);
   };
 
+  const openGame = () => {
+    playSound("pulse");
+    const ua = navigator.userAgent || "";
+    const isAndroid = /android/i.test(ua);
+    const isIOS = /iPad|iPhone|iPod/i.test(ua);
+    const androidPackage = "com.dts.freefiremax";
+    const iosAppId = "1300146617"; // Free Fire MAX (App Store)
+    const playStore = `https://play.google.com/store/apps/details?id=${androidPackage}`;
+    const appStore = `https://apps.apple.com/app/id${iosAppId}`;
+
+    if (isAndroid) {
+      // Try intent deep link → fallback to Play Store
+      const intent = `intent://launch/#Intent;scheme=app;package=${androidPackage};S.browser_fallback_url=${encodeURIComponent(playStore)};end`;
+      const fallbackTimer = setTimeout(() => { window.location.href = playStore; }, 1500);
+      try {
+        window.location.href = intent;
+      } catch {
+        clearTimeout(fallbackTimer);
+        window.location.href = playStore;
+      }
+    } else if (isIOS) {
+      // No public custom-scheme; route to App Store
+      window.location.href = appStore;
+    } else {
+      toast.error("Open the game on your mobile device");
+    }
+  };
+
   return (
     <div className="relative min-h-screen pb-10 text-foreground" style={{ background: "#0A0A0A" }}>
       <div className="pointer-events-none fixed inset-0 -z-10 opacity-50"
