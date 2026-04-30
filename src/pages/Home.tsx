@@ -57,19 +57,9 @@ const Home = () => {
 
   const sliderItems = homeBanners.length > 0 ? homeBanners : [{ id: "empty", image_url: null, title: "No Banner", subtitle: "", button_text: null }];
 
-  const openTournamentPage = async (category: Category) => {
+  const openTournamentPage = (category: Category) => {
     playSound("pulse");
-    const { data } = await supabase
-      .from("tournaments")
-      .select("id")
-      .eq("category", category)
-      .eq("published", true)
-      .in("status", ["upcoming", "live"])
-      .order("scheduled_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    navigate(data?.id ? `/tournament/${data.id}` : `/category/${category}`);
+    navigate(`/category/${category}`);
   };
 
   return (
