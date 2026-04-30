@@ -56,9 +56,21 @@ const TournamentDetails = () => {
   const diffMs = start - now;
   const isLive = t && diffMs <= 0 && diffMs > -2 * 60 * 60 * 1000;
   const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
-  const mm = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
-  const ss = String(totalSeconds % 60).padStart(2, "0");
   const unlocked = diffMs <= UNLOCK_MIN * 60 * 1000;
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const showSplit = diffMs > 0 && diffMs >= 60 * 60 * 1000; // >= 1h → D or H
+  const bigPrimary = showSplit
+    ? (days >= 1 ? String(days) : String(hours).padStart(2, "0"))
+    : String(minutes).padStart(2, "0");
+  const bigSecondary = showSplit
+    ? (days >= 1 ? "D" : "H")
+    : String(seconds).padStart(2, "0");
+  const labels: [string, string] = showSplit
+    ? (days >= 1 ? ["Days", ""] : ["Hours", ""])
+    : ["Min", "Sec"];
 
   // progress for ring (last hour fill)
   const progress = useMemo(() => {
@@ -101,6 +113,34 @@ const TournamentDetails = () => {
     toast.success(`${label} copied`);
   };
 
+  const openGame = () => {
+    playSound("pulse");
+    const ua = navigator.userAgent || "";
+    const isAndroid = /android/i.test(ua);
+    const isIOS = /iPad|iPhone|iPod/i.test(ua);
+    const androidPackage = "com.dts.freefiremax";
+    const iosAppId = "1300146617"; // Free Fire MAX (App Store)
+    const playStore = `https://play.google.com/store/apps/details?id=${androidPackage}`;
+    const appStore = `https://apps.apple.com/app/id${iosAppId}`;
+
+    if (isAndroid) {
+      // Try intent deep link → fallback to Play Store
+      const intent = `intent://launch/#Intent;scheme=app;package=${androidPackage};S.browser_fallback_url=${encodeURIComponent(playStore)};end`;
+      const fallbackTimer = setTimeout(() => { window.location.href = playStore; }, 1500);
+      try {
+        window.location.href = intent;
+      } catch {
+        clearTimeout(fallbackTimer);
+        window.location.href = playStore;
+      }
+    } else if (isIOS) {
+      // No public custom-scheme; route to App Store
+      window.location.href = appStore;
+    } else {
+      toast.error("Open the game on your mobile device");
+    }
+  };
+
   return (
     <div className="relative min-h-screen pb-10 text-foreground" style={{ background: "#0A0A0A" }}>
       <div className="pointer-events-none fixed inset-0 -z-10 opacity-50"
@@ -109,7 +149,10 @@ const TournamentDetails = () => {
       {/* TOP BAR */}
       <header className="mx-auto flex max-w-md items-center justify-between px-4 pt-4">
         <button
-          onClick={() => { playSound("tick"); navigate(-1); }}
+          onClick={() => {
+            playSound("tick");
+            navigate(`/category/${t.category}`, { replace: true });
+          }}
           className="flex items-center gap-2 rounded-xl border bg-background/40 px-3 py-2 backdrop-blur transition active:scale-95"
           style={{ borderColor: accent, boxShadow: `0 0 14px ${accentSoft}`, color: accent }}
         >
@@ -218,14 +261,22 @@ const TournamentDetails = () => {
             </div>
 
             <div className="flex-1 text-center">
-              <p className="font-display text-[10px] font-bold uppercase tracking-[0.32em] text-foreground/70">Match Starts In</p>
+              <p className="font-display text-[10px] font-bold uppercase tracking-[0.32em] text-foreground/70">
+                {diffMs <= 0 ? "Match Started" : "Match Starts In"}
+              </p>
               <div className="mt-1 flex items-baseline justify-center gap-2 font-display font-black">
-                <span className="text-3xl text-foreground" style={{ textShadow: `0 0 12px ${accent}88` }}>{mm}</span>
-                <span className="text-2xl" style={{ color: accent }}>:</span>
-                <span className="text-3xl text-foreground" style={{ textShadow: `0 0 12px ${accent}88` }}>{ss}</span>
+                <span className="text-3xl text-foreground" style={{ textShadow: `0 0 12px ${accent}88` }}>{bigPrimary}</span>
+                {!showSplit && <span className="text-2xl" style={{ color: accent }}>:</span>}
+                <span
+                  className={showSplit ? "text-2xl" : "text-3xl text-foreground"}
+                  style={showSplit ? { color: accent } : { textShadow: `0 0 12px ${accent}88` }}
+                >
+                  {bigSecondary}
+                </span>
               </div>
               <div className="mt-0.5 flex justify-center gap-6 font-display text-[9px] font-bold uppercase tracking-[0.3em]" style={{ color: accent }}>
-                <span>Min</span><span>Sec</span>
+                <span>{labels[0]}</span>
+                {labels[1] && <span>{labels[1]}</span>}
               </div>
             </div>
 
@@ -310,7 +361,7 @@ const TournamentDetails = () => {
           </button>
           <button
             disabled={!joined}
-            onClick={() => { playSound("pulse"); window.open("https://ff.garena.com/", "_blank"); }}
+            onClick={openGame}
             className="relative flex h-14 items-center justify-center gap-2 rounded-2xl font-display text-[12px] font-black uppercase tracking-[0.22em] transition active:scale-[0.98] disabled:opacity-50"
             style={{
               background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,

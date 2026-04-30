@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CalendarDays, Clock3, Coins, Trophy, UsersRound, X, Swords, Radio, Hexagon, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import { Button } from "@/components/ui/button";
 
@@ -56,12 +57,14 @@ const CardIcon = ({ category, color }: { category: Category; color: string }) =>
 const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const cat = (category as Category) ?? "battle_royale";
   const meta = CATEGORY_META[cat];
 
   const [tab, setTab] = useState<Tab>("upcoming");
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [pageBannerUrl, setPageBannerUrl] = useState<string | null>(null);
 
@@ -97,9 +100,19 @@ const CategoryPage = () => {
         }),
       );
       setCounts(nextCounts);
+      if (user && rows.length) {
+        const { data: regs } = await supabase
+          .from("registrations")
+          .select("tournament_id")
+          .eq("user_id", user.id)
+          .in("tournament_id", rows.map((r) => r.id));
+        setJoinedIds(new Set((regs ?? []).map((r: any) => r.tournament_id)));
+      } else {
+        setJoinedIds(new Set());
+      }
       setLoading(false);
     })();
-  }, [cat, tab, meta]);
+  }, [cat, tab, meta, user]);
 
   if (!meta) {
     return (
@@ -198,7 +211,7 @@ const CategoryPage = () => {
             </div>
           ) : (
             tournaments.map((t) => (
-              <TournamentCard key={t.id} tournament={t} count={counts[t.id] ?? 0} color={color} colorSoft={colorSoft} />
+              <TournamentCard key={t.id} tournament={t} count={counts[t.id] ?? 0} color={color} colorSoft={colorSoft} joined={joinedIds.has(t.id)} />
             ))
           )}
         </section>
@@ -218,11 +231,13 @@ const TournamentCard = ({
   count,
   color,
   colorSoft,
+  joined,
 }: {
   tournament: Tournament;
   count: number;
   color: string;
   colorSoft: string;
+  joined: boolean;
 }) => {
   const navigate = useNavigate();
   const date = new Date(t.scheduled_at);
@@ -290,11 +305,22 @@ const TournamentCard = ({
             </div>
           </div>
           <Button
-            onClick={() => navigate(`/tournament-slots/${t.id}`)}
-            className="h-9 rounded-full border bg-transparent px-4 font-display text-[11px] font-black uppercase tracking-wider animate-pulse-glow"
-            style={{ borderColor: color, color, boxShadow: `0 0 14px ${colorSoft}` }}
+            onClick={() =>
+              navigate(joined ? `/tournament/${t.id}` : `/tournament-slots/${t.id}`)
+            }
+            className="h-9 rounded-full border px-4 font-display text-[11px] font-black uppercase tracking-wider animate-pulse-glow"
+            style={
+              joined
+                ? {
+                    background: `linear-gradient(135deg, ${color}, ${color}cc)`,
+                    borderColor: color,
+                    color: "#0A0A0A",
+                    boxShadow: `0 0 16px ${color}`,
+                  }
+                : { borderColor: color, color, background: "transparent", boxShadow: `0 0 14px ${colorSoft}` }
+            }
           >
-            Join Now ›
+            {joined ? "✓ Joined" : "Join Now ›"}
           </Button>
         </div>
       </div>
