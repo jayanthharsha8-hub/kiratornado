@@ -59,11 +59,6 @@ const Home = () => {
 
   const openTournamentPage = async (category: Category) => {
     playSound("pulse");
-    if (category === "battle_royale") {
-      navigate("/battle-royale");
-      return;
-    }
-
     const { data } = await supabase
       .from("tournaments")
       .select("id")
