@@ -39,7 +39,18 @@ const TournamentSlots = () => {
     setFilledSet(filled);
 
     const { data: reg } = await supabase.from("registrations").select("id").eq("tournament_id", id).eq("user_id", user.id).maybeSingle();
-    if (reg) setJoined(true);
+    if (reg) {
+      // Already joined → never show slot page; go straight to match details (replace history)
+      navigate(`/tournament/${id}`, { replace: true });
+      return;
+    }
+
+    // Block joining if match already started
+    if (t.scheduled_at && new Date(t.scheduled_at).getTime() <= Date.now()) {
+      toast.error("Match already started");
+      navigate(`/tournament/${id}`, { replace: true });
+      return;
+    }
 
     const { data: prof } = await supabase.from("profiles").select("coins,player_level").eq("id", user.id).maybeSingle();
     if (prof) setProfile(prof as any);
@@ -58,7 +69,7 @@ const TournamentSlots = () => {
     if (error) { toast.error(error.message || "Unable to join"); return; }
     toast.success("Slot secured!");
     setJoined(true);
-    setTimeout(() => navigate(`/tournament/${tournament.id}`), 600);
+    setTimeout(() => navigate(`/tournament/${tournament.id}`, { replace: true }), 500);
   };
 
   if (!tournament) {
