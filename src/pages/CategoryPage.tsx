@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CalendarDays, Clock3, Coins, Trophy, UsersRound, X, Swords, Radio, Hexagon, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
 import { Button } from "@/components/ui/button";
 
@@ -56,12 +57,14 @@ const CardIcon = ({ category, color }: { category: Category; color: string }) =>
 const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const cat = (category as Category) ?? "battle_royale";
   const meta = CATEGORY_META[cat];
 
   const [tab, setTab] = useState<Tab>("upcoming");
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [pageBannerUrl, setPageBannerUrl] = useState<string | null>(null);
 
@@ -97,9 +100,19 @@ const CategoryPage = () => {
         }),
       );
       setCounts(nextCounts);
+      if (user && rows.length) {
+        const { data: regs } = await supabase
+          .from("registrations")
+          .select("tournament_id")
+          .eq("user_id", user.id)
+          .in("tournament_id", rows.map((r) => r.id));
+        setJoinedIds(new Set((regs ?? []).map((r: any) => r.tournament_id)));
+      } else {
+        setJoinedIds(new Set());
+      }
       setLoading(false);
     })();
-  }, [cat, tab, meta]);
+  }, [cat, tab, meta, user]);
 
   if (!meta) {
     return (
@@ -198,7 +211,7 @@ const CategoryPage = () => {
             </div>
           ) : (
             tournaments.map((t) => (
-              <TournamentCard key={t.id} tournament={t} count={counts[t.id] ?? 0} color={color} colorSoft={colorSoft} />
+              <TournamentCard key={t.id} tournament={t} count={counts[t.id] ?? 0} color={color} colorSoft={colorSoft} joined={joinedIds.has(t.id)} />
             ))
           )}
         </section>
