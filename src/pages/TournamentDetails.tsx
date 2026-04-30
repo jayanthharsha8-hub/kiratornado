@@ -341,7 +341,7 @@ const TournamentDetails = () => {
           </button>
           <button
             disabled={!joined}
-            onClick={() => { playSound("pulse"); window.open("https://ff.garena.com/", "_blank"); }}
+            onClick={openGame}
             className="relative flex h-14 items-center justify-center gap-2 rounded-2xl font-display text-[12px] font-black uppercase tracking-[0.22em] transition active:scale-[0.98] disabled:opacity-50"
             style={{
               background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
