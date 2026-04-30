@@ -1,274 +1,305 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { CalendarDays, Clock3, Coins, Trophy, UsersRound, X, Swords, Radio, Hexagon, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { SystemPanel } from "@/components/SystemPanel";
-import { Logo } from "@/components/Logo";
-import { ArrowLeft, Calendar, Clock, Coins, Users, Shield, Copy, Lock, CheckCircle, Trophy, Swords } from "lucide-react";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
-import { toast } from "sonner";
-
-interface Tournament {
-  id: string; title: string; category: Category; entry_fee: number; total_slots: number;
-  prize_pool: number; scheduled_at: string; room_id: string | null; room_password: string | null;
-  status: string; notes: string | null; level_requirement: number; banner_url: string | null;
-}
+import { Button } from "@/components/ui/button";
 
 type Tab = "upcoming" | "live" | "completed";
+
+interface Tournament {
+  id: string;
+  title: string;
+  category: Category;
+  entry_fee: number;
+  prize_pool: number;
+  scheduled_at: string;
+  total_slots: number;
+  status: string;
+}
+
+const TITLES: Record<Category, string> = {
+  battle_royale: "BATTLE ROYALE",
+  free_match: "FREE MATCH",
+  classic_squad: "CLASH SQUAD",
+  lone_wolf: "LONE WOLF",
+};
+
+const SUBTITLES: Record<Category, string> = {
+  battle_royale: "SOLO - 50 PLAYERS",
+  free_match: "SOLO - UNLIMITED",
+  classic_squad: "SQUAD - 4V4",
+  lone_wolf: "SOLO - 1V1",
+};
+
+const TAGLINES: Record<Category, string> = {
+  battle_royale: "FIGHT. SURVIVE. BE THE LAST ONE.",
+  free_match: "PLAY FREE. WIN BIG.",
+  classic_squad: "SQUAD UP. FIGHT TOGETHER. WIN TOGETHER.",
+  lone_wolf: "ONE MAN. ONE MISSION.",
+};
+
+const CardIcon = ({ category, color }: { category: Category; color: string }) => {
+  const style = { color, filter: `drop-shadow(0 0 6px ${color})` };
+  switch (category) {
+    case "battle_royale":
+      return <Shield className="h-10 w-10" style={style} />;
+    case "free_match":
+      return <Hexagon className="h-10 w-10" style={style} />;
+    case "classic_squad":
+      return <Swords className="h-10 w-10" style={style} />;
+    case "lone_wolf":
+      return <Swords className="h-10 w-10" style={style} />;
+  }
+};
 
 const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const cat = (category as Category) ?? "battle_royale";
+  const meta = CATEGORY_META[cat];
+
   const [tab, setTab] = useState<Tab>("upcoming");
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [pageBannerUrl, setPageBannerUrl] = useState<string | null>(null);
 
-  const cat = category as Category;
-  const meta = CATEGORY_META[cat];
-
   useEffect(() => {
-    if (!cat || !meta) return;
+    if (!meta) return;
+    setLoading(true);
     (async () => {
-      setLoading(true);
       const [{ data }, { data: pageBanner }] = await Promise.all([
         supabase
           .from("tournaments")
-          .select("*")
+          .select("id,title,category,entry_fee,prize_pool,scheduled_at,total_slots,status")
           .eq("category", cat)
-          .eq("status", tab as "upcoming" | "live" | "completed")
+          .eq("status", tab)
           .eq("published", true)
           .order("scheduled_at", { ascending: tab !== "completed" }),
-        (supabase as any).from("tournament_page_banners").select("banner_image_url").eq("category", cat).maybeSingle(),
+        (supabase as any)
+          .from("tournament_page_banners")
+          .select("banner_image_url")
+          .eq("category", cat)
+          .maybeSingle(),
       ]);
+      const rows = (data ?? []) as Tournament[];
+      setTournaments(rows);
       setPageBannerUrl(pageBanner?.banner_image_url ?? null);
-        setTournaments((data ?? []) as Tournament[]);
-        setLoading(false);
+      const nextCounts: Record<string, number> = {};
+      await Promise.all(
+        rows.map(async (t) => {
+          const { count } = await supabase
+            .from("registrations")
+            .select("id", { count: "exact", head: true })
+            .eq("tournament_id", t.id);
+          nextCounts[t.id] = count ?? 0;
+        }),
+      );
+      setCounts(nextCounts);
+      setLoading(false);
     })();
-  }, [cat, tab]);
+  }, [cat, tab, meta]);
 
-  if (!meta) return <div className="flex min-h-screen items-center justify-center text-xs uppercase tracking-[0.4em] text-primary text-glow">Invalid category</div>;
+  if (!meta) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-xs uppercase tracking-[0.4em] text-primary">
+        Invalid category
+      </div>
+    );
+  }
+
+  const color = meta.color;
+  const colorSoft = meta.colorSoft;
 
   return (
-    <div className="relative min-h-screen scanline pb-10">
-      <div className="pointer-events-none fixed inset-0 -z-10" style={{ background: 'var(--gradient-glow)' }} />
-
-      <header className="sticky top-0 z-30 border-b border-primary/30 bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
-          <button onClick={() => navigate("/home")} className="flex items-center gap-1 text-primary hover:text-glow-soft">
-            <ArrowLeft className="h-4 w-4" /><span className="text-xs uppercase tracking-widest">Back</span>
-          </button>
-          <Logo size={28} />
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-md space-y-5 px-4 pt-5">
-        <section className="animate-float-up overflow-hidden rounded-sm border bg-card/50" style={{ borderColor: meta.color, boxShadow: `0 0 14px ${meta.colorSoft}` }}>
-          <div className="relative aspect-[16/6] w-full">
+    <div className="min-h-screen bg-background px-3 pb-8 pt-4 text-foreground">
+      <main className="mx-auto max-w-md space-y-4">
+        {/* TOP BANNER */}
+        <section
+          className="relative overflow-hidden rounded-2xl"
+          style={{ border: `2px solid ${color}`, boxShadow: `0 0 18px ${colorSoft}` }}
+        >
+          <div className="relative aspect-[16/7] w-full">
             {pageBannerUrl ? (
               <img src={pageBannerUrl} alt={`${meta.title} banner`} className="h-full w-full object-cover" loading="lazy" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-card text-xs uppercase tracking-[0.3em] text-muted-foreground">No Banner</div>
+              <div className="h-full w-full bg-gradient-to-br from-background via-card to-background" />
             )}
+            <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
+
+            <div className="absolute left-3 top-3 font-display text-[10px] font-bold uppercase tracking-[0.3em] text-foreground/70">
+              TOURNAMENTS
+            </div>
+
+            <button
+              aria-label="Close"
+              onClick={() => navigate("/home")}
+              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border bg-background/40 text-foreground backdrop-blur-md transition active:scale-95"
+              style={{ borderColor: color, boxShadow: `0 0 10px ${colorSoft}` }}
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="absolute inset-x-0 bottom-3 px-4 text-right sm:text-right">
+              <h1
+                className="font-display text-3xl font-black uppercase italic leading-none tracking-tight text-foreground"
+                style={{ textShadow: `0 0 14px ${color}` }}
+              >
+                {TITLES[cat]}
+              </h1>
+              <p className="mt-1 font-display text-[10px] font-bold uppercase tracking-[0.32em]" style={{ color }}>
+                {TAGLINES[cat]}
+              </p>
+            </div>
           </div>
         </section>
 
-        <div className="animate-float-up text-center">
-          <p className="text-[10px] uppercase tracking-[0.4em] text-primary/80">[ Tournament Mode ]</p>
-          <h1 className="font-display text-2xl font-black uppercase tracking-[0.2em]" style={{ color: meta.color, textShadow: `0 0 10px ${meta.colorSoft}` }}>{meta.title}</h1>
-          <p className="text-xs text-muted-foreground mt-1">{meta.subtitle}</p>
-        </div>
+        {/* TABS */}
+        <section
+          className="grid grid-cols-3 overflow-hidden rounded-full border bg-card/40 p-1"
+          style={{ borderColor: `${color}55` }}
+        >
+          {(["upcoming", "live", "completed"] as Tab[]).map((item) => {
+            const active = tab === item;
+            return (
+              <button
+                key={item}
+                onClick={() => setTab(item)}
+                className="relative flex h-10 items-center justify-center gap-2 rounded-full font-display text-[12px] font-bold uppercase tracking-[0.16em] transition active:scale-[0.98]"
+                style={{
+                  color: active ? color : "hsl(0 0% 100% / 0.55)",
+                  background: active ? colorSoft : "transparent",
+                  boxShadow: active ? `inset 0 -2px 0 ${color}, 0 0 12px ${colorSoft}` : undefined,
+                }}
+              >
+                {item === "upcoming" && <CalendarDays className="h-4 w-4" />}
+                {item === "live" && <Radio className="h-4 w-4" />}
+                {item === "completed" && <Trophy className="h-4 w-4" />}
+                {item === "live" ? "Ongoing" : item.charAt(0).toUpperCase() + item.slice(1)}
+              </button>
+            );
+          })}
+        </section>
 
-        <div className="flex gap-2 animate-float-up" style={{ animationDelay: "0.1s" }}>
-          {(["upcoming", "live", "completed"] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 rounded border py-2.5 text-xs font-display uppercase tracking-[0.2em] transition-all ${
-                tab === t
-                  ? "text-glow glow-soft"
-                  : "bg-card/40 text-muted-foreground"
-              }`}
-              style={{ borderColor: tab === t ? meta.color : `${meta.color}55`, backgroundColor: tab === t ? meta.colorSoft : undefined, color: tab === t ? meta.color : undefined }}
+        {/* LIST */}
+        <section className="space-y-3">
+          {loading ? (
+            <div className="py-12 text-center font-display text-xs uppercase tracking-[0.35em]" style={{ color }}>
+              Loading
+            </div>
+          ) : tournaments.length === 0 ? (
+            <div
+              className="rounded-xl border py-10 text-center font-display text-xs uppercase tracking-[0.25em] text-foreground/55"
+              style={{ borderColor: color }}
             >
-              {t === "live" ? "Ongoing" : t.charAt(0).toUpperCase() + t.slice(1)}
-            </button>
-          ))}
-        </div>
+              No {tab === "live" ? "Ongoing" : tab} matches
+            </div>
+          ) : (
+            tournaments.map((t) => (
+              <TournamentCard key={t.id} tournament={t} count={counts[t.id] ?? 0} color={color} colorSoft={colorSoft} />
+            ))
+          )}
+        </section>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="text-xs uppercase tracking-[0.4em] text-primary text-glow animate-flicker">Loading...</div>
-          </div>
-        ) : tournaments.length === 0 ? (
-          <SystemPanel title="No Tournaments">
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No {tab} tournaments available. Check back soon, Hunter.
-            </p>
-          </SystemPanel>
-        ) : (
-          <div className="space-y-4">
-            {tournaments.map((t, i) => (
-              <TournamentCard key={t.id} tournament={t} index={i} userId={user?.id} />
-            ))}
-          </div>
-        )}
+        <div className="flex items-center justify-center gap-3 py-5 font-display text-[10px] font-bold uppercase tracking-[0.28em] text-foreground/30">
+          <span className="h-px w-16 bg-foreground/15" />
+          <span>▸▸ Lock Join And Win Exciting Rewards ◂◂</span>
+          <span className="h-px w-16 bg-foreground/15" />
+        </div>
       </main>
     </div>
   );
 };
 
-const TournamentCard = ({ tournament: t, index, userId }: { tournament: Tournament; index: number; userId?: string }) => {
+const TournamentCard = ({
+  tournament: t,
+  count,
+  color,
+  colorSoft,
+}: {
+  tournament: Tournament;
+  count: number;
+  color: string;
+  colorSoft: string;
+}) => {
   const navigate = useNavigate();
-  const [joined, setJoined] = useState(false);
-  const [count, setCount] = useState(0);
-
   const date = new Date(t.scheduled_at);
-
-  useEffect(() => {
-    loadData();
-  }, [t.id, userId]);
-
-  const loadData = async () => {
-    const { count: c } = await supabase.from("registrations").select("id", { count: "exact", head: true }).eq("tournament_id", t.id);
-    setCount(c ?? 0);
-    if (!userId) return;
-    const { data: reg } = await supabase.from("registrations").select("id").eq("tournament_id", t.id).eq("user_id", userId).maybeSingle();
-    setJoined(!!reg);
-  };
-
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} copied!`);
-  };
-
-  const formatTime12 = (d: Date) => {
-    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
-  };
-
-  const meta = CATEGORY_META[t.category];
-  const accent = meta.color;
+  const dateText = date
+    .toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })
+    .toUpperCase();
+  const timeText = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
 
   return (
-    <div className="animate-float-up overflow-hidden rounded-sm border bg-card/65 transition-all duration-200 hover:-translate-y-0.5" style={{ borderColor: accent, boxShadow: `0 0 16px ${meta.colorSoft}`, animationDelay: `${index * 0.1}s` }}>
-      <div className="flex gap-3 p-3">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border bg-background/50" style={{ borderColor: accent, color: accent, boxShadow: `inset 0 0 12px ${meta.colorSoft}` }}>
-          <Swords className="h-7 w-7" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[9px] uppercase tracking-[0.28em]" style={{ color: accent }}>{meta.title}</p>
-          <h2 className="truncate font-display text-base font-black uppercase tracking-wider text-foreground text-glow">{t.title}</h2>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{meta.subtitle}</p>
-        </div>
-        {joined && (
-          <div className="flex h-fit items-center gap-1 rounded-sm border px-2 py-1 text-[9px] uppercase tracking-widest" style={{ borderColor: accent, color: accent, backgroundColor: meta.colorSoft }}>
-            <CheckCircle className="h-3 w-3" /> Joined
-          </div>
-        )}
+    <article
+      className="relative flex overflow-hidden rounded-2xl border bg-card/60 p-2 backdrop-blur transition active:scale-[0.99]"
+      style={{ borderColor: color, boxShadow: `0 0 14px ${colorSoft}` }}
+    >
+      {/* LEFT icon */}
+      <div
+        className="flex h-[88px] w-[88px] shrink-0 items-center justify-center rounded-xl border bg-background/60"
+        style={{ borderColor: color, boxShadow: `inset 0 0 12px ${colorSoft}` }}
+      >
+        <CardIcon category={t.category} color={color} />
       </div>
 
-      <div className="px-3 pb-3 space-y-3">
-        <div className="grid grid-cols-2 gap-2">
-          <InfoCell icon={<Calendar className="h-3.5 w-3.5" />} label="Date" value={date.toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })} accent={accent} />
-          <InfoCell icon={<Clock className="h-3.5 w-3.5" />} label="Time" value={formatTime12(date)} accent={accent} />
-          <InfoCell icon={<Coins className="h-3.5 w-3.5" />} label="Entry" value={t.entry_fee === 0 ? "FREE" : `${t.entry_fee} coins`} accent={accent} />
-          <InfoCell icon={<Trophy className="h-3.5 w-3.5" />} label="Prize" value={`${t.prize_pool} coins`} accent={accent} />
-          <InfoCell icon={<Users className="h-3.5 w-3.5" />} label="Players" value={`${count}/${t.total_slots}`} accent={accent} />
-          <InfoCell icon={<Shield className="h-3.5 w-3.5" />} label="Level" value={`${t.level_requirement}+`} accent={accent} />
-        </div>
-
-        <SystemPanel title="Instructions">
-          <p className="text-xs text-foreground/85 leading-relaxed">
-            After registering, wait for match time. We will send a notification before the match starts.
-            If notifications are OFF, open the app and check manually.
-          </p>
-          <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-            If player name is incorrect, you will be removed from the room and no coins will be refunded.
-          </p>
-        </SystemPanel>
-
-        <div className="flex items-start gap-2 rounded border border-primary/30 bg-primary/5 px-3 py-2.5">
-          <Shield className="h-4 w-4 shrink-0 text-primary mt-0.5" />
-          <div className="space-y-1">
-            <p className="text-xs text-primary/90 font-display uppercase tracking-wider">
-              Do not share Room ID and Password with anyone!
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Hackers and cheaters will be permanently banned.
+      {/* CENTER */}
+      <div className="min-w-0 flex-1 px-3 py-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="truncate font-display text-base font-black uppercase leading-tight text-foreground">
+              {TITLES[t.category]}
+            </h2>
+            <p className="mt-0.5 font-display text-[11px] font-bold uppercase tracking-wide" style={{ color }}>
+              {SUBTITLES[t.category]}
             </p>
           </div>
-        </div>
-
-        {/* Room Details (only for joined users) */}
-        {joined && (
-          <SystemPanel title="Room Details">
-            <div className="space-y-2">
-              <RoomRow label="Room ID" value={t.room_id} onCopy={copyToClipboard} />
-              <RoomRow label="Password" value={t.room_password} onCopy={copyToClipboard} />
-            </div>
-          </SystemPanel>
-        )}
-
-        {!joined && t.status === "upcoming" && (
-          <SystemPanel title="Room Details">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Lock className="h-4 w-4 text-primary" />
-              Join the match to unlock room details.
-            </div>
-          </SystemPanel>
-        )}
-
-        {joined && t.status === "upcoming" && (
-          <div className="rounded border border-primary/40 bg-primary/10 px-4 py-3 text-center">
-            <p className="font-display text-sm uppercase tracking-[0.2em] text-primary text-glow">
-              Joined -- Upcoming
-            </p>
-          </div>
-        )}
-
-        {/* Join button redirects to slots page */}
-        {!joined && t.status === "upcoming" && count < t.total_slots && (
-          <button
-            onClick={() => navigate(`/tournament-slots/${t.id}`)}
-            className="h-14 w-full rounded-sm font-display text-sm font-bold uppercase tracking-[0.3em] text-background transition active:scale-[0.98] animate-pulse-glow"
-            style={{ backgroundColor: accent, boxShadow: `0 0 18px ${meta.colorSoft}` }}
+          <div
+            className="flex shrink-0 items-center gap-1 text-xs font-bold"
+            style={{ color }}
           >
-            JOIN NOW
-          </button>
-        )}
-
-        {!joined && count >= t.total_slots && t.status === "upcoming" && (
-          <div className="rounded border border-destructive/40 bg-destructive/10 px-4 py-3 text-center">
-            <p className="font-display text-sm uppercase tracking-[0.2em] text-destructive">[ Slots Full ]</p>
+            <UsersRound className="h-3.5 w-3.5" /> {count}/{t.total_slots}
           </div>
-        )}
+        </div>
+
+        <div className="mt-2 flex items-center gap-3 text-[10px] font-semibold text-foreground/65">
+          <span className="inline-flex items-center gap-1">
+            <CalendarDays className="h-3 w-3" style={{ color }} /> {dateText}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Clock3 className="h-3 w-3" style={{ color }} /> {timeText}
+          </span>
+        </div>
+
+        <div className="mt-2 flex items-end justify-between gap-2">
+          <div className="flex gap-3">
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-foreground/55">Entry Fee</p>
+              <p className="font-display text-xs font-black text-foreground">
+                {t.entry_fee === 0 ? "FREE" : (
+                  <><Coins className="mr-0.5 inline h-3 w-3 text-yellow-400" />₹{t.entry_fee}</>
+                )}
+              </p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-foreground/55">Prize Pool</p>
+              <p className="font-display text-xs font-black" style={{ color }}>
+                <Trophy className="mr-0.5 inline h-3 w-3 text-yellow-400" />₹{t.prize_pool}
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => navigate(`/tournament-slots/${t.id}`)}
+            className="h-9 rounded-full border bg-transparent px-4 font-display text-[11px] font-black uppercase tracking-wider animate-pulse-glow"
+            style={{ borderColor: color, color, boxShadow: `0 0 14px ${colorSoft}` }}
+          >
+            Join Now ›
+          </Button>
+        </div>
       </div>
-    </div>
+    </article>
   );
 };
-
-const InfoCell = ({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent: string }) => (
-  <div className="rounded-sm border bg-background/35 p-2.5" style={{ borderColor: `${accent}55` }}>
-    <div className="flex items-center gap-1 text-[10px] uppercase tracking-widest" style={{ color: accent }}>{icon}{label}</div>
-    <div className="mt-1 text-sm text-foreground">{value}</div>
-  </div>
-);
-
-const RoomRow = ({ label, value, onCopy }: { label: string; value: string | null; onCopy: (v: string, l: string) => void }) => (
-  <div className="flex items-center justify-between rounded border border-primary/20 bg-background/40 px-3 py-2">
-    <div>
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className="font-display text-sm text-primary text-glow-soft mt-0.5">
-        {value ? value : "Waiting for Admin..."}
-      </div>
-    </div>
-    {value && (
-      <button onClick={() => onCopy(value, label)} className="rounded border border-primary/30 bg-primary/10 p-1.5 text-primary hover:bg-primary/20 transition">
-        <Copy className="h-3.5 w-3.5" />
-      </button>
-    )}
-  </div>
-);
 
 export default CategoryPage;
