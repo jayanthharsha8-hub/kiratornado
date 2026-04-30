@@ -1,190 +1,208 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Lock, ShieldCheck, Coins, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { SystemPanel } from "@/components/SystemPanel";
-import { Logo } from "@/components/Logo";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { CATEGORY_META, Category } from "@/lib/tournaments";
 import { toast } from "sonner";
+import { playSound } from "@/hooks/useSound";
+
+interface Tournament {
+  id: string; title: string; category: Category; entry_fee: number;
+  total_slots: number; prize_pool: number; scheduled_at: string;
+  level_requirement: number;
+}
 
 const TournamentSlots = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [tournament, setTournament] = useState<any>(null);
-  const [filledSlots, setFilledSlots] = useState<number>(0);
+  const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [filledSet, setFilledSet] = useState<Set<number>>(new Set());
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [joining, setJoining] = useState(false);
   const [profile, setProfile] = useState<{ coins: number; player_level: number } | null>(null);
   const [joined, setJoined] = useState(false);
 
-  useEffect(() => {
-    if (!id || !user) return;
-    loadData();
-  }, [id, user]);
+  useEffect(() => { if (id && user) loadData(); /* eslint-disable-next-line */ }, [id, user]);
 
   const loadData = async () => {
     if (!id || !user) return;
     const { data: t } = await supabase.from("tournaments").select("*").eq("id", id).maybeSingle();
     if (!t) { navigate("/home"); return; }
-    setTournament(t);
+    setTournament(t as Tournament);
 
     const { count } = await supabase.from("registrations").select("id", { count: "exact", head: true }).eq("tournament_id", id);
-    setFilledSlots(count ?? 0);
+    // We don't track per-slot index; treat first N slots as filled visually.
+    const filled = new Set<number>();
+    for (let i = 1; i <= (count ?? 0); i++) filled.add(i);
+    setFilledSet(filled);
 
     const { data: reg } = await supabase.from("registrations").select("id").eq("tournament_id", id).eq("user_id", user.id).maybeSingle();
-    if (reg) { setJoined(true); }
+    if (reg) setJoined(true);
 
     const { data: prof } = await supabase.from("profiles").select("coins,player_level").eq("id", user.id).maybeSingle();
-    if (prof) setProfile(prof);
+    if (prof) setProfile(prof as any);
   };
 
-  const joinSlot = async () => {
-    if (!user || !tournament || !selectedSlot || joined) return;
+  const confirmJoin = async () => {
+    if (!user || !tournament || !selectedSlot || joined || joining) return;
     if (profile && profile.player_level < tournament.level_requirement) {
-      toast.error(`Level ${tournament.level_requirement}+ required to join.`);
+      toast.error(`Level ${tournament.level_requirement}+ required`);
       return;
     }
+    playSound("pulse");
     setJoining(true);
-
     const { error } = await (supabase.rpc as any)("join_tournament", { _tournament_id: tournament.id });
     setJoining(false);
-    if (error) {
-      toast.error(error.message || "Unable to join tournament.");
-      return;
-    }
-    toast.success("Slot secured. Good luck, Hunter.", {
-      style: { background: "hsl(var(--card))", color: "hsl(var(--primary))", border: "1px solid hsl(var(--primary))", boxShadow: "0 0 18px hsl(var(--primary) / 0.55)" },
-    });
+    if (error) { toast.error(error.message || "Unable to join"); return; }
+    toast.success("Slot secured!");
     setJoined(true);
-    setTimeout(() => navigate(-1), 900);
+    setTimeout(() => navigate(`/tournament/${tournament.id}`), 600);
   };
 
   if (!tournament) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-xs uppercase tracking-[0.4em] text-primary text-glow animate-flicker">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-xs uppercase tracking-[0.4em] text-primary animate-pulse">Loading...</div>
       </div>
     );
   }
 
+  const meta = CATEGORY_META[tournament.category];
+  const accent = meta.color;
+  const accentSoft = meta.colorSoft;
   const totalSlots = tournament.total_slots;
-  const filledArr = Array.from({ length: filledSlots }, (_, i) => i + 1);
+  const modeLabel =
+    tournament.category === "lone_wolf" ? "1V1 DUEL"
+    : tournament.category === "classic_squad" ? "SQUAD 4V4"
+    : tournament.category === "battle_royale" ? "SOLO BR"
+    : "SOLO";
 
   return (
-    <div className="relative min-h-screen scanline pb-10">
-      <div className="pointer-events-none fixed inset-0 -z-10" style={{ background: 'var(--gradient-glow)' }} />
+    <div className="relative min-h-screen bg-background pb-10 text-foreground">
+      <div className="pointer-events-none fixed inset-0 -z-10 opacity-40"
+        style={{ background: `radial-gradient(800px 400px at 50% -10%, ${accentSoft}, transparent 60%)` }} />
 
-      <header className="sticky top-0 z-30 border-b border-primary/30 bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-primary hover:text-glow-soft">
-            <ArrowLeft className="h-4 w-4" /><span className="text-xs uppercase tracking-widest">Back</span>
-          </button>
-          <Logo size={28} />
+      {/* TOP BAR */}
+      <header className="mx-auto flex max-w-md items-center justify-between px-4 pt-4">
+        <button
+          onClick={() => { playSound("tick"); navigate(-1); }}
+          className="flex items-center gap-2 rounded-xl border bg-background/40 px-3 py-2 backdrop-blur transition active:scale-95"
+          style={{ borderColor: accent, boxShadow: `0 0 12px ${accentSoft}`, color: accent }}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="font-display text-[11px] font-bold uppercase tracking-[0.2em]">Back</span>
+        </button>
+        <div className="font-display text-[10px] font-bold uppercase tracking-[0.32em] text-foreground/50 truncate max-w-[55%] text-right">
+          {tournament.title}
         </div>
       </header>
 
       <main className="mx-auto max-w-md space-y-5 px-4 pt-5">
-        <div className="animate-float-up text-center">
-          <p className="text-[10px] uppercase tracking-[0.4em] text-primary/80">[ Select Slot ]</p>
-          <h1 className="font-display text-xl font-black uppercase tracking-[0.2em] text-primary text-glow">{tournament.title}</h1>
-          <p className="text-xs text-muted-foreground mt-1">{filledSlots} / {totalSlots} slots filled</p>
+        {/* HEADER */}
+        <div className="text-center">
+          <p className="font-display text-[11px] font-bold uppercase tracking-[0.45em]" style={{ color: accent, textShadow: `0 0 10px ${accent}` }}>
+            [ Select Slot ]
+          </p>
+          <h1 className="mt-2 font-display text-2xl font-black uppercase italic tracking-tight">
+            {modeLabel}
+          </h1>
+          <p className="mt-1 font-display text-[11px] font-bold uppercase tracking-[0.3em] text-foreground/55">
+            {filledSet.size}/{totalSlots} Slots Filled
+          </p>
         </div>
 
-        {joined ? (
-          <SystemPanel title="Status">
-            <div className="rounded border border-primary/40 bg-primary/10 px-4 py-3 text-center">
-              <p className="font-display text-sm uppercase tracking-[0.2em] text-primary text-glow">
-                Joined -- Upcoming
-              </p>
-            </div>
-          </SystemPanel>
-        ) : (
-          <>
-            <SystemPanel title="Available Slots">
-              <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto pr-1">
-                {Array.from({ length: totalSlots }, (_, i) => i + 1).map((slot) => {
-                  const filled = filledArr.includes(slot);
-                  const selected = selectedSlot === slot;
-                  return (
-                    <button
-                      key={slot}
-                      disabled={filled}
-                      onClick={() => setSelectedSlot(slot)}
-                      className={`rounded border py-3 text-xs font-display uppercase tracking-widest transition-all ${
-                        filled
-                          ? "border-destructive/30 bg-destructive/10 text-destructive/50 cursor-not-allowed"
-                          : selected
-                          ? "border-primary bg-primary/30 text-primary text-glow glow-soft"
-                          : "border-primary/30 bg-card/40 text-foreground hover:border-primary hover:bg-primary/10 hover:text-primary"
-                      }`}
-                    >
-                      {filled ? `Slot ${slot} [Filled]` : `Slot ${slot}`}
-                    </button>
-                  );
-                })}
-              </div>
-            </SystemPanel>
-
-            {selectedSlot && (
-              <div className="animate-float-up space-y-3">
-                <SystemPanel title="Confirm Join">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between border-b border-primary/20 pb-1">
-                      <span className="text-muted-foreground">Selected Slot</span>
-                      <span className="text-primary text-glow-soft">Slot {selectedSlot}</span>
-                    </div>
-                    {tournament.entry_fee > 0 && (
-                      <div className="flex justify-between border-b border-primary/20 pb-1">
-                        <span className="text-muted-foreground">Entry Fee</span>
-                        <span className="text-primary text-glow-soft">{tournament.entry_fee} coins</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Your Balance</span>
-                      <span className="text-primary text-glow-soft">{profile?.coins ?? 0} coins</span>
-                    </div>
-                  </div>
-                </SystemPanel>
-
-                <Button
-                  onClick={joinSlot}
-                  disabled={joining}
-                  className="h-14 w-full bg-primary font-display text-sm font-bold uppercase tracking-[0.3em] text-primary-foreground hover:bg-primary-glow animate-pulse-glow"
-                >
-                  {joining ? "Joining..." : `[ Confirm Slot ${selectedSlot} ]`}
-                </Button>
-
-                <button
-                  onClick={() => setSelectedSlot(null)}
-                  className="w-full text-center text-xs text-muted-foreground hover:text-primary"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Warnings */}
-        <SystemPanel title="Instructions">
-          <p className="text-xs text-foreground/85 leading-relaxed">
-            After registering, wait for match time. We will send a notification before the match starts.
-            If notifications are OFF, open the app and check manually.
-          </p>
-        </SystemPanel>
-
-        <SystemPanel title="Security Notice">
-          <div className="space-y-2 text-xs text-foreground/85">
-            <p>Do not share Room ID and Password with anyone.</p>
-            <p>If player name is incorrect, you will be removed from the room and no coins will be refunded.</p>
-            <p className="text-primary/90 font-display uppercase tracking-wider">Hackers and cheaters will be permanently banned.</p>
+        {/* AVAILABLE SLOTS */}
+        <section
+          className="rounded-2xl border bg-card/40 p-4 backdrop-blur"
+          style={{ borderColor: accent, boxShadow: `0 0 18px ${accentSoft}` }}
+        >
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-[12px] font-bold uppercase tracking-[0.28em]" style={{ color: accent }}>
+              Available Slots
+            </h2>
+            <span className="font-display text-[10px] uppercase tracking-[0.2em] text-foreground/55">
+              Tap to select
+            </span>
           </div>
-        </SystemPanel>
+
+          <div className="grid grid-cols-2 gap-2.5 max-h-[44vh] overflow-y-auto pr-1">
+            {Array.from({ length: totalSlots }, (_, i) => i + 1).map((slot) => {
+              const filled = filledSet.has(slot);
+              const selected = selectedSlot === slot;
+              return (
+                <button
+                  key={slot}
+                  disabled={filled || joined}
+                  onClick={() => { playSound("tick"); setSelectedSlot(slot); }}
+                  className="relative flex h-16 flex-col items-center justify-center rounded-xl border font-display transition active:scale-[0.97] disabled:cursor-not-allowed"
+                  style={
+                    filled
+                      ? { borderColor: "hsl(0 0% 100% / 0.08)", background: "hsl(0 0% 100% / 0.03)", color: "hsl(0 0% 100% / 0.3)" }
+                      : selected
+                      ? { borderColor: accent, background: `${accent}26`, color: accent, boxShadow: `0 0 22px ${accent}, inset 0 0 14px ${accentSoft}` }
+                      : { borderColor: `${accent}55`, background: "hsl(0 0% 100% / 0.02)", color: "hsl(0 0% 100% / 0.85)" }
+                  }
+                >
+                  <span className="text-[10px] font-bold uppercase tracking-[0.25em] opacity-70">Slot</span>
+                  <span className="text-lg font-black leading-none">{String(slot).padStart(2, "0")}</span>
+                  {filled && (
+                    <span className="absolute right-2 top-2 inline-flex items-center gap-1 text-[8px] uppercase tracking-widest">
+                      <Lock className="h-2.5 w-2.5" /> Full
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* SUMMARY */}
+        <section className="grid grid-cols-3 gap-2">
+          <Stat label="Entry" value={tournament.entry_fee === 0 ? "FREE" : `₹${tournament.entry_fee}`} icon={<Coins className="h-3.5 w-3.5" />} accent={accent} />
+          <Stat label="Prize" value={`₹${tournament.prize_pool}`} icon={<Trophy className="h-3.5 w-3.5" />} accent={accent} />
+          <Stat label="Balance" value={`${profile?.coins ?? 0}`} icon={<ShieldCheck className="h-3.5 w-3.5" />} accent={accent} />
+        </section>
+
+        {/* INSTRUCTIONS */}
+        <section className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-[11.5px] leading-relaxed text-foreground/70">
+          <p className="mb-1 font-display text-[10px] font-bold uppercase tracking-[0.28em]" style={{ color: accent }}>Instructions</p>
+          <ul className="space-y-1">
+            <li>• Slot is reserved as soon as you confirm.</li>
+            <li>• Room ID unlocks 10 minutes before match start.</li>
+            <li>• Use registered IGN only — wrong IGN = removed.</li>
+          </ul>
+        </section>
+
+        {/* CONFIRM CTA */}
+        <button
+          onClick={confirmJoin}
+          disabled={!selectedSlot || joining || joined}
+          className="h-14 w-full rounded-xl font-display text-sm font-black uppercase tracking-[0.28em] transition active:scale-[0.98] disabled:opacity-40"
+          style={
+            selectedSlot && !joined
+              ? { background: `linear-gradient(135deg, ${accent}, ${accent}cc)`, color: "#0A0A0A", boxShadow: `0 8px 28px ${accent}77, 0 0 18px ${accent}` }
+              : { background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 100% / 0.4)", border: `1px solid ${accent}33` }
+          }
+        >
+          {joined ? "✓ Joined" : joining ? "Joining..." : selectedSlot ? `Confirm Join · Slot ${selectedSlot}` : "Select a Slot"}
+        </button>
       </main>
     </div>
   );
 };
+
+const Stat = ({ label, value, icon, accent }: { label: string; value: string; icon: React.ReactNode; accent: string }) => (
+  <div className="rounded-xl border bg-card/40 px-2 py-2.5 text-center backdrop-blur"
+    style={{ borderColor: `${accent}44` }}>
+    <div className="flex items-center justify-center gap-1 text-[9px] uppercase tracking-[0.2em] text-foreground/55">
+      <span style={{ color: accent }}>{icon}</span>{label}
+    </div>
+    <div className="mt-1 font-display text-sm font-black" style={{ color: accent, textShadow: `0 0 8px ${accent}66` }}>
+      {value}
+    </div>
+  </div>
+);
 
 export default TournamentSlots;

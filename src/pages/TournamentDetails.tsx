@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Calendar, Clock, Coins, Users, Shield, Sparkles } from "lucide-react";
+import {
+  ArrowLeft, Calendar, Clock, Coins, Trophy, KeyRound, ShieldCheck, Copy,
+  LogIn, Gamepad2, CheckCircle2, Bell, Hourglass, Lock, Headphones, ExternalLink, AlertTriangle,
+} from "lucide-react";
 import { CATEGORY_META, Category } from "@/lib/tournaments";
-import { Particles } from "@/components/Particles";
 import { playSound } from "@/hooks/useSound";
 import { toast } from "sonner";
 
@@ -15,6 +17,7 @@ interface Tournament {
 }
 
 const db = supabase as any;
+const UNLOCK_MIN = 10;
 
 const TournamentDetails = () => {
   const { id } = useParams();
@@ -22,9 +25,8 @@ const TournamentDetails = () => {
   const { user } = useAuth();
   const [t, setT] = useState<Tournament | null>(null);
   const [joined, setJoined] = useState(false);
-  const [count, setCount] = useState(0);
-  const [joining, setJoining] = useState(false);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [now, setNow] = useState(Date.now());
 
   const load = async () => {
     if (!id) return;
@@ -38,211 +40,382 @@ const TournamentDetails = () => {
         .eq("tournament_id", id).eq("user_id", user.id).maybeSingle();
       setJoined(!!reg);
     }
-    const { count: c } = await supabase
-      .from("registrations").select("id", { count: "exact", head: true })
-      .eq("tournament_id", id);
-    setCount(c ?? 0);
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id, user]);
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(i);
+  }, []);
 
-  if (!t) {
+  const meta = t ? CATEGORY_META[t.category] : null;
+  const accent = meta?.color ?? "hsl(0 100% 62%)";
+  const accentSoft = meta?.colorSoft ?? "hsl(0 100% 62% / 0.2)";
+
+  const start = t ? new Date(t.scheduled_at).getTime() : 0;
+  const diffMs = start - now;
+  const isLive = t && diffMs <= 0 && diffMs > -2 * 60 * 60 * 1000;
+  const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
+  const mm = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+  const ss = String(totalSeconds % 60).padStart(2, "0");
+  const unlocked = diffMs <= UNLOCK_MIN * 60 * 1000;
+
+  // progress for ring (last hour fill)
+  const progress = useMemo(() => {
+    if (!t) return 0;
+    const hourMs = 60 * 60 * 1000;
+    if (diffMs >= hourMs) return 0;
+    if (diffMs <= 0) return 1;
+    return 1 - diffMs / hourMs;
+  }, [diffMs, t]);
+
+  if (!t || !meta) {
     return (
-      <div className="flex min-h-screen items-center justify-center" style={{ background: "#05070d" }}>
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-xs uppercase tracking-[0.4em] text-primary animate-pulse">Loading…</div>
       </div>
     );
   }
 
-  const meta = CATEGORY_META[t.category];
   const date = new Date(t.scheduled_at);
-  const accent = meta.color;
+  const dateStr = date.toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" });
+  const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
 
-  const dateStr = date.toLocaleDateString([], { day: "2-digit", month: "short" });
-  const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  const entryStr = t.entry_fee === 0 ? "FREE" : `${t.entry_fee} coins`;
+  const TITLE_MAP: Record<Category, [string, string]> = {
+    battle_royale: ["BATTLE", "ROYALE"],
+    free_match: ["FREE", "MATCH"],
+    classic_squad: ["CLASH", "SQUAD"],
+    lone_wolf: ["LONE", "WOLF"],
+  };
+  const SUBTITLE_MAP: Record<Category, string> = {
+    battle_royale: "SOLO • 50 PLAYERS",
+    free_match: "SOLO • UNLIMITED",
+    classic_squad: "SQUAD • 4V4",
+    lone_wolf: "SOLO • 1V1",
+  };
+  const [w1, w2] = TITLE_MAP[t.category];
 
-  const handleJoinClick = async () => {
-    if (!t || joined || joining) return;
-    playSound("pulse");
-    if (count >= t.total_slots) { toast.error("MATCH FULL"); return; }
-    setJoining(true);
-    const { error } = await (supabase.rpc as any)("join_tournament", { _tournament_id: t.id });
-    setJoining(false);
-    if (error) { toast.error(error.message || "Unable to join match"); return; }
-    toast.success("JOINED");
-    setJoined(true);
-    setCount((value) => value + 1);
+  const copy = (val: string | null, label: string) => {
+    if (!val) return;
+    navigator.clipboard.writeText(val);
+    toast.success(`${label} copied`);
   };
 
   return (
-    <div className="relative min-h-screen pb-12 animate-fade-in" style={{ background: "#05070d" }}>
-      <Particles />
+    <div className="relative min-h-screen pb-10 text-foreground" style={{ background: "#0A0A0A" }}>
+      <div className="pointer-events-none fixed inset-0 -z-10 opacity-50"
+        style={{ background: `radial-gradient(900px 500px at 50% -10%, ${accentSoft}, transparent 60%)` }} />
 
-      {/* Top bar — minimal */}
-      <header className="sticky top-0 z-30 bg-background/60 backdrop-blur-md">
-        <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
-          <button
-            onClick={() => { playSound("tick"); navigate(-1); }}
-            aria-label="Back"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-foreground/90 transition active:scale-95 hover:border-primary/50 hover:text-primary"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-full border"
-            style={{
-              borderColor: `${accent}66`,
-              background: "rgba(255,255,255,0.03)",
-              boxShadow: `0 0 8px ${accent}33`,
-              color: accent,
-            }}
-          >
-            <Sparkles className="h-4 w-4" />
-          </div>
+      {/* TOP BAR */}
+      <header className="mx-auto flex max-w-md items-center justify-between px-4 pt-4">
+        <button
+          onClick={() => { playSound("tick"); navigate(-1); }}
+          className="flex items-center gap-2 rounded-xl border bg-background/40 px-3 py-2 backdrop-blur transition active:scale-95"
+          style={{ borderColor: accent, boxShadow: `0 0 14px ${accentSoft}`, color: accent }}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="font-display text-[11px] font-bold uppercase tracking-[0.22em]">Back</span>
+        </button>
+        <div
+          className="flex items-center gap-2 rounded-xl border bg-background/40 px-3 py-2 backdrop-blur"
+          style={{ borderColor: isLive ? "hsl(142 71% 45%)" : `${accent}55`, boxShadow: isLive ? `0 0 14px hsl(142 71% 45% / 0.4)` : undefined }}
+        >
+          <span className={`h-2 w-2 rounded-full ${isLive ? "animate-pulse" : ""}`} style={{ background: isLive ? "hsl(142 71% 45%)" : "hsl(0 0% 100% / 0.3)" }} />
+          <span className="font-display text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: isLive ? "hsl(142 71% 45%)" : "hsl(0 0% 100% / 0.5)" }}>
+            {isLive ? "Live" : "Upcoming"}
+          </span>
         </div>
       </header>
 
-      <main className="mx-auto max-w-md space-y-6 px-4 pt-2">
-        {/* HERO */}
-        <section className="relative overflow-hidden rounded-xl">
-          <div className="relative h-44 w-full">
-            {bannerUrl ? (
-              <img
-                src={bannerUrl}
-                alt={t.title}
-                width={1024}
-                height={512}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-card text-xs uppercase tracking-[0.3em] text-muted-foreground">No Banner</div>
-            )}
-            <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(5,7,13,0.55) 0%, rgba(5,7,13,0.85) 100%)" }} />
-            <div className="absolute inset-x-0 bottom-0 p-4">
-              <h1
-                className="font-display text-2xl font-black uppercase tracking-wider"
-                style={{ color: accent, textShadow: `0 0 10px ${accent}88` }}
-              >
-                {meta.title}
-              </h1>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.3em] text-foreground/80">{t.title}</p>
-              <p className="mt-1 text-xs text-foreground/60">{meta.subtitle}</p>
-            </div>
-          </div>
-        </section>
+      {/* HEADER TITLE */}
+      <div className="mx-auto mt-5 max-w-md px-4 text-center">
+        <h1 className="font-display text-3xl font-black uppercase italic tracking-tight">
+          <span className="text-foreground">MATCH </span>
+          <span style={{ color: accent, textShadow: `0 0 14px ${accent}` }}>DETAILS</span>
+        </h1>
+        <p className="mt-1 inline-flex items-center gap-2 font-display text-[10px] font-bold uppercase tracking-[0.35em] text-foreground/55">
+          <span className="h-px w-6" style={{ background: `${accent}88` }} />
+          Get Ready For Battle
+          <span className="h-px w-6" style={{ background: `${accent}88` }} />
+        </p>
+      </div>
 
-        {/* MATCH INFO — single airy block */}
-        <section className="rounded-lg border border-white/10 bg-white/[0.02] px-4 py-3.5">
-          <div className="flex items-center justify-between text-[13px] text-foreground/90">
-            <Cell icon={<Calendar className="h-3.5 w-3.5" />} value={dateStr} />
-            <Dot />
-            <Cell icon={<Clock className="h-3.5 w-3.5" />} value={timeStr} />
-            <Dot />
-            <Cell icon={<Coins className="h-3.5 w-3.5" />} value={entryStr} accent={accent} />
-          </div>
-          <div className="mt-3 flex items-center justify-between text-[12px] text-foreground/75">
-            <div className="flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5 opacity-70" />
-              <span>Slots: <span className="text-foreground">{count}/{t.total_slots}</span></span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Shield className="h-3.5 w-3.5 opacity-70" />
-              <span>Level: <span className="text-foreground">{t.level_requirement}+</span></span>
-            </div>
-          </div>
-        </section>
-
-        {/* JOIN / JOINED */}
-        {joined ? (
-          <div className="space-y-1.5 text-center">
+      <main className="mx-auto mt-5 max-w-md space-y-5 px-4">
+        {/* MATCH INFO CARD */}
+        <section
+          className="relative overflow-hidden rounded-2xl border bg-card/40 p-3 backdrop-blur"
+          style={{ borderColor: accent, boxShadow: `0 0 22px ${accentSoft}, inset 0 0 30px ${accent}10` }}
+        >
+          <div className="flex gap-3">
             <div
-              className="mx-auto flex h-14 w-full items-center justify-center rounded-lg border font-display text-sm font-bold uppercase tracking-[0.3em] animate-pulse-glow"
+              className="relative h-[136px] w-[120px] shrink-0 overflow-hidden rounded-xl border"
+              style={{ borderColor: accent, boxShadow: `0 0 16px ${accentSoft}` }}
+            >
+              {bannerUrl ? (
+                <img src={bannerUrl} alt={t.title} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-[0.25em] text-foreground/40"
+                  style={{ background: `linear-gradient(135deg, ${accent}33, transparent)` }}>
+                  No Image
+                </div>
+              )}
+              <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, transparent, ${accent}22)` }} />
+            </div>
+
+            <div className="flex min-w-0 flex-1 flex-col">
+              <h2 className="font-display text-xl font-black uppercase italic leading-none tracking-tight">
+                <span className="text-foreground">{w1} </span>
+                <span style={{ color: accent, textShadow: `0 0 10px ${accent}` }}>{w2}</span>
+              </h2>
+              <span
+                className="mt-2 inline-flex w-fit items-center rounded-full px-3 py-1 font-display text-[10px] font-bold uppercase tracking-[0.18em]"
+                style={{ background: `${accent}1f`, color: accent, border: `1px solid ${accent}66`, boxShadow: `0 0 10px ${accentSoft}` }}
+              >
+                {SUBTITLE_MAP[t.category]}
+              </span>
+
+              <div className="mt-3 flex items-center gap-3 text-[11px] font-semibold text-foreground/85">
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" style={{ color: accent }} /> {dateStr}
+                </span>
+                <span className="h-3 w-px bg-white/15" />
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" style={{ color: accent }} /> {timeStr}
+                </span>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="text-yellow-400"><Coins className="h-4 w-4" /></div>
+                  <div>
+                    <p className="text-[9px] uppercase tracking-widest text-foreground/55">Entry Fee</p>
+                    <p className="font-display text-sm font-black">{t.entry_fee === 0 ? "FREE" : `₹${t.entry_fee}`}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 border-l border-white/10 pl-2">
+                  <div className="text-yellow-400"><Trophy className="h-4 w-4" /></div>
+                  <div>
+                    <p className="text-[9px] uppercase tracking-widest text-foreground/55">Prize Pool</p>
+                    <p className="font-display text-sm font-black" style={{ color: accent }}>₹{t.prize_pool}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* COUNTDOWN */}
+        <section
+          className="relative overflow-hidden rounded-2xl border bg-card/40 px-4 py-4 backdrop-blur"
+          style={{ borderColor: accent, boxShadow: `0 0 22px ${accentSoft}` }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border"
+              style={{ borderColor: accent, boxShadow: `inset 0 0 14px ${accentSoft}, 0 0 14px ${accentSoft}`, color: accent }}
+            >
+              <Hourglass className="h-6 w-6" style={{ filter: `drop-shadow(0 0 6px ${accent})` }} />
+            </div>
+
+            <div className="flex-1 text-center">
+              <p className="font-display text-[10px] font-bold uppercase tracking-[0.32em] text-foreground/70">Match Starts In</p>
+              <div className="mt-1 flex items-baseline justify-center gap-2 font-display font-black">
+                <span className="text-3xl text-foreground" style={{ textShadow: `0 0 12px ${accent}88` }}>{mm}</span>
+                <span className="text-2xl" style={{ color: accent }}>:</span>
+                <span className="text-3xl text-foreground" style={{ textShadow: `0 0 12px ${accent}88` }}>{ss}</span>
+              </div>
+              <div className="mt-0.5 flex justify-center gap-6 font-display text-[9px] font-bold uppercase tracking-[0.3em]" style={{ color: accent }}>
+                <span>Min</span><span>Sec</span>
+              </div>
+            </div>
+
+            <ProgressRing progress={progress} accent={accent} />
+          </div>
+        </section>
+
+        {/* ROOM DETAILS */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full" style={{ background: accent, boxShadow: `0 0 8px ${accent}` }} />
+              <h3 className="font-display text-[12px] font-black uppercase tracking-[0.28em] text-foreground">Room Details</h3>
+              <span className="hidden sm:block ml-2 h-px w-16 bg-white/10" />
+            </div>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-[0.22em]"
               style={{
-                borderColor: accent,
-                color: accent,
-                background: `${accent}14`,
-                boxShadow: `0 0 18px ${accent}55, inset 0 0 12px ${accent}22`,
+                color: unlocked ? accent : "hsl(142 71% 55%)",
+                borderColor: unlocked ? `${accent}66` : "hsl(142 71% 45% / 0.5)",
+                background: unlocked ? `${accent}14` : "hsl(142 71% 45% / 0.1)",
+                boxShadow: `0 0 10px ${unlocked ? accentSoft : "hsl(142 71% 45% / 0.3)"}`,
               }}
             >
-              ✓ Joined
-            </div>
-            <p className="text-[11px] uppercase tracking-[0.25em] text-foreground/60">Match starts soon</p>
+              <Lock className="h-3 w-3" />
+              {unlocked ? "Unlocked" : "Unlocks 10 Min Before"}
+            </span>
           </div>
-        ) : (
+
+          <RoomRow
+            icon={<KeyRound className="h-5 w-5" />}
+            label="Room ID"
+            value={joined && unlocked ? t.room_id : null}
+            placeholder="Waiting for admin..."
+            accent={accent}
+            accentSoft={accentSoft}
+            onCopy={() => copy(t.room_id, "Room ID")}
+            locked={!joined || !unlocked}
+          />
+          <RoomRow
+            icon={<ShieldCheck className="h-5 w-5" />}
+            label="Password"
+            value={joined && unlocked ? t.room_password : null}
+            placeholder="Waiting for admin..."
+            accent={accent}
+            accentSoft={accentSoft}
+            onCopy={() => copy(t.room_password, "Password")}
+            locked={!joined || !unlocked}
+          />
+
+          {!joined && (
+            <p className="text-center font-display text-[10px] uppercase tracking-[0.25em] text-foreground/45">
+              Join the match to receive room access
+            </p>
+          )}
+        </section>
+
+        {/* WHAT TO DO */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full" style={{ background: accent, boxShadow: `0 0 8px ${accent}` }} />
+            <h3 className="font-display text-[12px] font-black uppercase tracking-[0.28em] text-foreground">What To Do</h3>
+            <span className="ml-2 h-px flex-1 bg-white/10" />
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            <InstructionCard icon={<LogIn className="h-5 w-5" />} title="Enter the room" subtitle="5 mins before" accent={accent} />
+            <InstructionCard icon={<Gamepad2 className="h-5 w-5" />} title="Use your" subtitle="registered IGN" accent={accent} />
+            <InstructionCard icon={<CheckCircle2 className="h-5 w-5" />} title="Be ready" subtitle="before start" accent="hsl(142 71% 45%)" />
+            <InstructionCard icon={<Bell className="h-5 w-5" />} title="Stay online" subtitle="for updates" accent={accent} />
+          </div>
+        </section>
+
+        {/* BOTTOM ACTIONS */}
+        <section className="grid grid-cols-2 gap-3">
           <button
-            onClick={handleJoinClick}
-            disabled={count >= t.total_slots}
-            className="h-14 w-full rounded-lg font-display text-sm font-bold uppercase tracking-[0.3em] text-background transition active:scale-[0.98] disabled:opacity-50"
+            onClick={() => toast("Contact admin via Profile › Support")}
+            className="flex h-14 items-center justify-center gap-2 rounded-2xl border bg-background/30 font-display text-[12px] font-black uppercase tracking-[0.22em] text-foreground transition active:scale-[0.98]"
+            style={{ borderColor: accent, boxShadow: `0 0 14px ${accentSoft}` }}
+          >
+            <Headphones className="h-4 w-4" style={{ color: accent }} />
+            Contact Admin
+          </button>
+          <button
+            disabled={!joined}
+            onClick={() => { playSound("pulse"); window.open("https://ff.garena.com/", "_blank"); }}
+            className="relative flex h-14 items-center justify-center gap-2 rounded-2xl font-display text-[12px] font-black uppercase tracking-[0.22em] transition active:scale-[0.98] disabled:opacity-50"
             style={{
-              background: `linear-gradient(135deg, ${accent} 0%, ${accent}cc 100%)`,
-              boxShadow: `0 6px 20px ${accent}55`,
+              background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
+              color: "#0A0A0A",
+              boxShadow: `0 8px 24px ${accent}77, 0 0 18px ${accent}`,
             }}
           >
-            {joining ? "Joining..." : count >= t.total_slots ? "MATCH FULL" : "JOIN MATCH"}
+            <ExternalLink className="h-4 w-4" />
+            Open Game
+          </button>
+        </section>
+
+        {!joined && (
+          <button
+            onClick={() => navigate(`/tournament-slots/${t.id}`)}
+            className="h-12 w-full rounded-xl border font-display text-[11px] font-black uppercase tracking-[0.28em] transition active:scale-[0.98]"
+            style={{ borderColor: accent, color: accent, background: `${accent}14`, boxShadow: `0 0 16px ${accentSoft}` }}
+          >
+            Join This Match
           </button>
         )}
 
-        {/* ROOM DETAILS — only after join */}
-        {joined && (
-          <section className="space-y-2.5 px-1">
-            <h3 className="font-display text-[11px] uppercase tracking-[0.3em] text-foreground/70">Room Details</h3>
-            <RoomLine label="Room ID" value={t.room_id} accent={accent} />
-            <RoomLine label="Password" value={t.room_password} accent={accent} />
-          </section>
-        )}
-
-        {/* INSTRUCTIONS */}
-        <section className="space-y-2 px-1">
-          <h3
-            className="font-display text-[11px] uppercase tracking-[0.3em]"
-            style={{ color: accent, textShadow: `0 0 8px ${accent}55` }}
-          >
-            Instructions
-          </h3>
-          <ul className="space-y-1.5 text-[12.5px] leading-relaxed text-foreground/80">
-            <li>• Enter the room 5 minutes before match time.</li>
-            <li>• Use your registered in-game name only.</li>
-            <li>• Room ID unlocks 10 minutes before match.</li>
-            <li>• Match starts on time — be ready.</li>
-          </ul>
-        </section>
-
-        {/* WARNING — thin border only */}
-        <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2.5 text-[12px] text-destructive/90">
-          ⚠ Do not share room ID and password.
+        {/* SECURITY WARNING */}
+        <div
+          className="flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-center font-display text-[11px] font-bold uppercase tracking-[0.2em]"
+          style={{
+            borderColor: "hsl(0 100% 62%)",
+            background: "hsl(0 100% 62% / 0.08)",
+            color: "hsl(0 100% 75%)",
+            boxShadow: "0 0 16px hsl(0 100% 62% / 0.3)",
+          }}
+        >
+          <AlertTriangle className="h-4 w-4" />
+          Do not share Room ID & Password with anyone
         </div>
       </main>
     </div>
   );
 };
 
-const Cell = ({ icon, value, accent }: { icon: React.ReactNode; value: string; accent?: string }) => (
-  <div className="flex items-center gap-1.5" style={accent ? { color: accent } : undefined}>
-    <span className="opacity-70">{icon}</span>
-    <span className="font-display text-[12.5px] font-semibold tracking-wide">{value}</span>
+const ProgressRing = ({ progress, accent }: { progress: number; accent: string }) => {
+  const r = 26;
+  const c = 2 * Math.PI * r;
+  const dash = c * progress;
+  return (
+    <svg width="64" height="64" viewBox="0 0 64 64" className="shrink-0">
+      <circle cx="32" cy="32" r={r} stroke="hsl(0 0% 100% / 0.08)" strokeWidth="6" fill="none" />
+      <circle
+        cx="32" cy="32" r={r}
+        stroke={accent}
+        strokeWidth="6"
+        fill="none"
+        strokeLinecap="round"
+        strokeDasharray={`${dash} ${c}`}
+        transform="rotate(-90 32 32)"
+        style={{ filter: `drop-shadow(0 0 6px ${accent})` }}
+      />
+    </svg>
+  );
+};
+
+const RoomRow = ({
+  icon, label, value, placeholder, accent, accentSoft, onCopy, locked,
+}: {
+  icon: React.ReactNode; label: string; value: string | null; placeholder: string;
+  accent: string; accentSoft: string; onCopy: () => void; locked: boolean;
+}) => (
+  <div
+    className={`flex items-center gap-3 rounded-2xl border bg-card/40 p-3 backdrop-blur ${locked ? "opacity-70" : ""}`}
+    style={{ borderColor: locked ? "hsl(0 0% 100% / 0.1)" : accent, boxShadow: locked ? undefined : `0 0 16px ${accentSoft}` }}
+  >
+    <div
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border"
+      style={{ borderColor: accent, color: accent, boxShadow: `inset 0 0 10px ${accentSoft}` }}
+    >
+      {icon}
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="font-display text-[10px] font-bold uppercase tracking-[0.28em] text-foreground/55">{label}</p>
+      <p className={`mt-0.5 font-display font-black ${value ? "text-xl tracking-wider" : "text-[12px] italic text-foreground/40"}`}
+        style={value ? { color: "#fff", textShadow: `0 0 10px ${accent}66` } : undefined}>
+        {value ?? placeholder}
+      </p>
+    </div>
+    <button
+      disabled={!value}
+      onClick={onCopy}
+      className="flex items-center gap-1.5 rounded-xl border px-3 py-2 font-display text-[10px] font-black uppercase tracking-[0.2em] transition active:scale-95 disabled:opacity-40"
+      style={{ borderColor: accent, color: accent, background: `${accent}10`, boxShadow: value ? `0 0 12px ${accentSoft}` : undefined }}
+    >
+      <Copy className="h-3.5 w-3.5" /> Copy
+    </button>
   </div>
 );
 
-const Dot = () => <span className="h-1 w-1 rounded-full bg-foreground/25" />;
-
-const RoomLine = ({ label, value, accent }: { label: string; value: string | null; accent: string }) => (
-  <div className="flex items-center justify-between text-[13px]">
-    <span className="text-foreground/65">{label}</span>
-    {value ? (
-      <span className="font-display tracking-wider" style={{ color: accent, textShadow: `0 0 6px ${accent}66` }}>
-        {value}
-      </span>
-    ) : (
-      <span className="flex items-center gap-1 text-foreground/55 italic">
-        Waiting for Admin
-        <span className="inline-flex">
-          <span className="animate-pulse" style={{ animationDelay: "0ms" }}>.</span>
-          <span className="animate-pulse" style={{ animationDelay: "200ms" }}>.</span>
-          <span className="animate-pulse" style={{ animationDelay: "400ms" }}>.</span>
-        </span>
-      </span>
-    )}
+const InstructionCard = ({ icon, title, subtitle, accent }: { icon: React.ReactNode; title: string; subtitle: string; accent: string }) => (
+  <div
+    className="flex flex-col items-center gap-1.5 rounded-xl border bg-card/40 p-2.5 text-center backdrop-blur"
+    style={{ borderColor: `${accent}55`, boxShadow: `inset 0 0 10px ${accent}10` }}
+  >
+    <div style={{ color: accent, filter: `drop-shadow(0 0 6px ${accent})` }}>{icon}</div>
+    <div>
+      <p className="font-display text-[10px] font-black leading-tight text-foreground">{title}</p>
+      <p className="font-display text-[9px] leading-tight text-foreground/55">{subtitle}</p>
+    </div>
   </div>
 );
 
