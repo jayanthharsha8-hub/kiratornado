@@ -261,14 +261,22 @@ const TournamentDetails = () => {
             </div>
 
             <div className="flex-1 text-center">
-              <p className="font-display text-[10px] font-bold uppercase tracking-[0.32em] text-foreground/70">Match Starts In</p>
+              <p className="font-display text-[10px] font-bold uppercase tracking-[0.32em] text-foreground/70">
+                {diffMs <= 0 ? "Match Started" : "Match Starts In"}
+              </p>
               <div className="mt-1 flex items-baseline justify-center gap-2 font-display font-black">
-                <span className="text-3xl text-foreground" style={{ textShadow: `0 0 12px ${accent}88` }}>{mm}</span>
-                <span className="text-2xl" style={{ color: accent }}>:</span>
-                <span className="text-3xl text-foreground" style={{ textShadow: `0 0 12px ${accent}88` }}>{ss}</span>
+                <span className="text-3xl text-foreground" style={{ textShadow: `0 0 12px ${accent}88` }}>{bigPrimary}</span>
+                {!showSplit && <span className="text-2xl" style={{ color: accent }}>:</span>}
+                <span
+                  className={showSplit ? "text-2xl" : "text-3xl text-foreground"}
+                  style={showSplit ? { color: accent } : { textShadow: `0 0 12px ${accent}88` }}
+                >
+                  {bigSecondary}
+                </span>
               </div>
               <div className="mt-0.5 flex justify-center gap-6 font-display text-[9px] font-bold uppercase tracking-[0.3em]" style={{ color: accent }}>
-                <span>Min</span><span>Sec</span>
+                <span>{labels[0]}</span>
+                {labels[1] && <span>{labels[1]}</span>}
               </div>
             </div>
 
