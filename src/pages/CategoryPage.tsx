@@ -231,11 +231,13 @@ const TournamentCard = ({
   count,
   color,
   colorSoft,
+  joined,
 }: {
   tournament: Tournament;
   count: number;
   color: string;
   colorSoft: string;
+  joined: boolean;
 }) => {
   const navigate = useNavigate();
   const date = new Date(t.scheduled_at);
@@ -303,11 +305,22 @@ const TournamentCard = ({
             </div>
           </div>
           <Button
-            onClick={() => navigate(`/tournament-slots/${t.id}`)}
-            className="h-9 rounded-full border bg-transparent px-4 font-display text-[11px] font-black uppercase tracking-wider animate-pulse-glow"
-            style={{ borderColor: color, color, boxShadow: `0 0 14px ${colorSoft}` }}
+            onClick={() =>
+              navigate(joined ? `/tournament/${t.id}` : `/tournament-slots/${t.id}`)
+            }
+            className="h-9 rounded-full border px-4 font-display text-[11px] font-black uppercase tracking-wider animate-pulse-glow"
+            style={
+              joined
+                ? {
+                    background: `linear-gradient(135deg, ${color}, ${color}cc)`,
+                    borderColor: color,
+                    color: "#0A0A0A",
+                    boxShadow: `0 0 16px ${color}`,
+                  }
+                : { borderColor: color, color, background: "transparent", boxShadow: `0 0 14px ${colorSoft}` }
+            }
           >
-            Join Now ›
+            {joined ? "✓ Joined" : "Join Now ›"}
           </Button>
         </div>
       </div>
