@@ -109,7 +109,10 @@ const TournamentDetails = () => {
       {/* TOP BAR */}
       <header className="mx-auto flex max-w-md items-center justify-between px-4 pt-4">
         <button
-          onClick={() => { playSound("tick"); navigate(-1); }}
+          onClick={() => {
+            playSound("tick");
+            navigate(`/category/${t.category}`, { replace: true });
+          }}
           className="flex items-center gap-2 rounded-xl border bg-background/40 px-3 py-2 backdrop-blur transition active:scale-95"
           style={{ borderColor: accent, boxShadow: `0 0 14px ${accentSoft}`, color: accent }}
         >
