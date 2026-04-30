@@ -14,7 +14,6 @@ import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Home from "./pages/Home";
-import BattleRoyalePage from "./pages/BattleRoyalePage";
 import TournamentDetails from "./pages/TournamentDetails";
 import TournamentSlots from "./pages/TournamentSlots";
 import CategoryPage from "./pages/CategoryPage";
@@ -55,7 +54,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="/battle-royale" element={<ProtectedRoute><BattleRoyalePage /></ProtectedRoute>} />
+            <Route path="/battle-royale" element={<ProtectedRoute><CategoryPage /></ProtectedRoute>} />
             <Route path="/category/:category" element={<ProtectedRoute><CategoryPage /></ProtectedRoute>} />
             <Route path="/tournament/:id" element={<ProtectedRoute><TournamentDetails /></ProtectedRoute>} />
             <Route path="/tournament-slots/:id" element={<ProtectedRoute><TournamentSlots /></ProtectedRoute>} />
