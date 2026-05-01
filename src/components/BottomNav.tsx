@@ -16,7 +16,7 @@ export const BottomNav = () => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-primary/40 bg-background/95 backdrop-blur">
       <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-80" />
-      <div className="mx-auto grid max-w-md grid-cols-5 items-stretch px-2 py-1.5">
+      <div className="mx-auto grid max-w-md grid-cols-5 items-stretch gap-0 px-1 py-2">
         {TABS.map(({ to, label, icon: Icon, premium }) => {
           const active = location.pathname === to || (to === "/wallet" && location.pathname.startsWith("/wallet"));
           return (
@@ -25,8 +25,8 @@ export const BottomNav = () => {
               to={to}
               onClick={() => playSound("tick")}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-1 rounded-md px-1 py-1.5 transition-all duration-300 active:scale-[0.95]",
-                active ? "text-primary" : "text-foreground/55 hover:text-foreground/80"
+                "relative flex min-w-0 flex-col items-center justify-start gap-1.5 rounded-md px-0.5 py-1 transition-all duration-300 active:scale-[0.95]",
+                active ? "text-primary" : "text-muted-foreground hover:text-foreground/80"
               )}
             >
               {premium && (
@@ -40,17 +40,17 @@ export const BottomNav = () => {
                 />
               )}
               <Icon
-                strokeWidth={1.6}
+                strokeWidth={1.75}
                 className={cn(
-                  "relative h-[22px] w-[22px] transition-all duration-300",
+                  "relative h-[22px] w-[22px] shrink-0 transition-all duration-300",
                   active && "scale-110 drop-shadow-[0_0_10px_hsl(var(--primary))]",
                   premium && !active && "drop-shadow-[0_0_6px_hsl(var(--primary)/0.55)]"
                 )}
               />
               <span
                 className={cn(
-                  "relative font-sans text-[9px] font-light uppercase tracking-[0.18em] transition-all",
-                  active && "font-medium tracking-[0.22em] drop-shadow-[0_0_6px_hsl(var(--primary))]"
+                  "relative block w-full truncate text-center font-sans text-[8.5px] font-light uppercase leading-none tracking-[0.12em] transition-all",
+                  active && "font-medium tracking-[0.14em] text-primary drop-shadow-[0_0_6px_hsl(var(--primary))]"
                 )}
               >
                 {label}
