@@ -167,26 +167,6 @@ const Home = () => {
           </div>
         </SystemPanel>
 
-        {/* Weekly Leaderboard CTA */}
-        <button
-          onClick={() => { playSound("pulse"); navigate("/leaderboard"); }}
-          className="flex w-full items-center gap-2 rounded-sm border border-primary/40 bg-card/50 p-3 text-left transition hover:scale-[1.005] active:scale-[0.99] glow-soft"
-        >
-          <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-primary/50 bg-primary/10 text-primary glow-soft"
-          >
-            <Crown className="h-6 w-6" />
-          </div>
-          <div className="flex-1">
-            <div className="font-display text-xs font-black uppercase tracking-widest text-foreground text-glow-soft">
-              Weekly Leaderboard
-            </div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Top 10 Hunters -- Rankings
-            </div>
-          </div>
-          <ChevronRight className="h-4 w-4 text-primary" />
-        </button>
       </main>
 
       <BottomNav />
