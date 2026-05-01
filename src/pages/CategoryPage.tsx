@@ -11,6 +11,7 @@ type Tab = "upcoming" | "live" | "completed";
 interface Tournament {
   id: string;
   title: string;
+  subtitle: string | null;
   category: Category;
   entry_fee: number;
   prize_pool: number;
@@ -75,7 +76,7 @@ const CategoryPage = () => {
       const [{ data }, { data: pageBanner }] = await Promise.all([
         supabase
           .from("tournaments")
-          .select("id,title,category,entry_fee,prize_pool,scheduled_at,total_slots,status")
+          .select("id,title,subtitle,category,entry_fee,prize_pool,scheduled_at,total_slots,status")
           .eq("category", cat)
           .eq("status", tab)
           .eq("published", true)
@@ -264,10 +265,10 @@ const TournamentCard = ({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <h2 className="truncate font-display text-base font-black uppercase leading-tight text-foreground">
-              {TITLES[t.category]}
+              {t.title || TITLES[t.category]}
             </h2>
             <p className="mt-0.5 font-display text-[11px] font-bold uppercase tracking-wide" style={{ color }}>
-              {SUBTITLES[t.category]}
+              {t.subtitle && t.subtitle.trim() ? t.subtitle : SUBTITLES[t.category]}
             </p>
           </div>
           <div
