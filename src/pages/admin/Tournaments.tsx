@@ -21,7 +21,7 @@ const CATEGORIES: Category[] = ["free_match", "battle_royale", "classic_squad", 
 const STATUSES = ["upcoming", "live", "completed", "cancelled"] as const;
 
 const empty = {
-  title: "", category: "free_match" as Category, entry_fee: 0, total_slots: 50,
+  title: "", subtitle: "", category: "free_match" as Category, entry_fee: 0, total_slots: 50,
   prize_pool: 0, scheduled_at: "", level_requirement: 1, published: false, status: "upcoming" as const,
 };
 
@@ -52,7 +52,7 @@ export default function AdminTournaments() {
   const save = async () => {
     if (!form.title || !form.scheduled_at) { toast.error("Title and date are required"); return; }
     const payload = {
-      title: form.title, category: form.category, entry_fee: form.entry_fee,
+      title: form.title, subtitle: form.subtitle, category: form.category, entry_fee: form.entry_fee,
       total_slots: form.total_slots, prize_pool: form.prize_pool, scheduled_at: form.scheduled_at,
       level_requirement: form.level_requirement, published: form.published, status: form.status,
     };
@@ -76,7 +76,7 @@ export default function AdminTournaments() {
   const edit = (t: Tournament) => {
     setEditing(t.id);
     setForm({
-      title: t.title, category: t.category as Category, entry_fee: t.entry_fee,
+      title: t.title, subtitle: (t as any).subtitle ?? "", category: t.category as Category, entry_fee: t.entry_fee,
       total_slots: t.total_slots, prize_pool: t.prize_pool,
       scheduled_at: t.scheduled_at.slice(0, 16),
       level_requirement: (t as any).level_requirement ?? 1,
@@ -221,6 +221,10 @@ export default function AdminTournaments() {
             <div>
               <Label className="text-xs uppercase tracking-widest text-muted-foreground">Title</Label>
               <Input value={form.title} onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))} className="border-primary/30 bg-card" />
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-widest text-muted-foreground">Subtitle</Label>
+              <Input value={form.subtitle} onChange={(e) => setForm(p => ({ ...p, subtitle: e.target.value }))} placeholder="e.g. SOLO - 50 PLAYERS" className="border-primary/30 bg-card" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
