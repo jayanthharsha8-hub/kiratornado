@@ -12,6 +12,27 @@ import { Wallet, Menu } from "lucide-react";
 import { Particles } from "@/components/Particles";
 import { playSound } from "@/hooks/useSound";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
+import customRoomsImg from "@/assets/card-custom-rooms.jpg";
+import topRankersImg from "@/assets/card-top-rankers.jpg";
+
+const EXTRA_CARDS = [
+  {
+    key: "custom_rooms",
+    title: "Custom Rooms",
+    image: customRoomsImg,
+    color: "hsl(54 100% 55%)",
+    colorSoft: "hsl(54 100% 55% / 0.25)",
+    route: "/tournaments",
+  },
+  {
+    key: "top_rankers",
+    title: "Top Rankers",
+    image: topRankersImg,
+    color: "hsl(28 100% 55%)",
+    colorSoft: "hsl(28 100% 55% / 0.25)",
+    route: "/leaderboard",
+  },
+];
 
 type HomeBanner = { id: string; image_url: string | null; title: string; subtitle: string; button_text: string | null };
 type CategoryCardImage = { category: Category; card_image_url: string | null };
@@ -164,6 +185,27 @@ const Home = () => {
                 </button>
               );
             })}
+            {EXTRA_CARDS.map((card, i) => (
+              <button
+                key={card.key}
+                onClick={() => { playSound("pulse"); navigate(card.route); }}
+                className="group relative aspect-square overflow-hidden rounded-sm border bg-card text-left transition-all duration-200 hover:scale-[1.01] active:scale-[0.98] animate-float-up"
+                style={{
+                  borderColor: card.color,
+                  boxShadow: `0 0 8px ${card.colorSoft}`,
+                  animationDelay: `${(4 + i) * 0.05}s`,
+                }}
+              >
+                <img
+                  src={card.image}
+                  alt={card.title}
+                  loading="lazy"
+                  width={512}
+                  height={512}
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                />
+              </button>
+            ))}
           </div>
         </SystemPanel>
 
