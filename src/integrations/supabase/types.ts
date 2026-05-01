@@ -346,6 +346,7 @@ export type Database = {
           room_password: string | null
           scheduled_at: string
           status: Database["public"]["Enums"]["tournament_status"]
+          subtitle: string | null
           title: string
           total_slots: number
         }
@@ -363,6 +364,7 @@ export type Database = {
           room_password?: string | null
           scheduled_at: string
           status?: Database["public"]["Enums"]["tournament_status"]
+          subtitle?: string | null
           title: string
           total_slots: number
         }
@@ -380,6 +382,7 @@ export type Database = {
           room_password?: string | null
           scheduled_at?: string
           status?: Database["public"]["Enums"]["tournament_status"]
+          subtitle?: string | null
           title?: string
           total_slots?: number
         }
