@@ -17,7 +17,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type Tournament = Tables<"tournaments">;
 
-const CATEGORIES: Category[] = ["free_match", "battle_royale", "classic_squad", "lone_wolf"];
+const CATEGORIES: Category[] = ["free_match", "battle_royale", "classic_squad", "lone_wolf", "custom_rooms", "weekly_rankings"];
 const STATUSES = ["upcoming", "live", "completed", "cancelled"] as const;
 
 const empty = {

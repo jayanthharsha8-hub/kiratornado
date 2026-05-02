@@ -98,12 +98,16 @@ const TournamentDetails = () => {
     free_match: ["FREE", "MATCH"],
     classic_squad: ["CLASH", "SQUAD"],
     lone_wolf: ["LONE", "WOLF"],
+    custom_rooms: ["CUSTOM", "ROOMS"],
+    weekly_rankings: ["WEEKLY", "RANKINGS"],
   };
   const SUBTITLE_MAP: Record<Category, string> = {
     battle_royale: "SOLO • 50 PLAYERS",
     free_match: "SOLO • UNLIMITED",
     classic_squad: "SQUAD • 4V4",
     lone_wolf: "SOLO • 1V1",
+    custom_rooms: "PRIVATE • SQUAD UP",
+    weekly_rankings: "WEEKLY • TOP REWARDS",
   };
   const [w1, w2] = TITLE_MAP[t.category];
 

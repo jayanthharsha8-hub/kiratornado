@@ -29,9 +29,9 @@ const uploadBannerImage = async (file: File, folder: string) => {
 
 export default function AdminBanners() {
   const [homeBanners, setHomeBanners] = useState<HomeBanner[]>([]);
-  const [categoryImages, setCategoryImages] = useState<Record<Category, string | null>>({ free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null });
+  const [categoryImages, setCategoryImages] = useState<Record<Category, string | null>>({ free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null, custom_rooms: null, weekly_rankings: null });
   const [tournamentBanners, setTournamentBanners] = useState<Record<string, string | null>>({});
-  const [pageBanners, setPageBanners] = useState<Record<Category, string | null>>({ free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null });
+  const [pageBanners, setPageBanners] = useState<Record<Category, string | null>>({ free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null, custom_rooms: null, weekly_rankings: null });
   const [tournaments, setTournaments] = useState<TournamentRow[]>([]);
   const [homeForm, setHomeForm] = useState({ title: "", subtitle: "", button_text: "", sort_order: 0 });
   const [selectedTournament, setSelectedTournament] = useState("");

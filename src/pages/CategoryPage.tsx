@@ -25,6 +25,8 @@ const TITLES: Record<Category, string> = {
   free_match: "FREE MATCH",
   classic_squad: "CLASH SQUAD",
   lone_wolf: "LONE WOLF",
+  custom_rooms: "CUSTOM ROOMS",
+  weekly_rankings: "WEEKLY RANKINGS",
 };
 
 const SUBTITLES: Record<Category, string> = {
@@ -32,6 +34,8 @@ const SUBTITLES: Record<Category, string> = {
   free_match: "SOLO - UNLIMITED",
   classic_squad: "SQUAD - 4V4",
   lone_wolf: "SOLO - 1V1",
+  custom_rooms: "PRIVATE - SQUAD UP",
+  weekly_rankings: "WEEKLY - TOP REWARDS",
 };
 
 const TAGLINES: Record<Category, string> = {
@@ -39,6 +43,8 @@ const TAGLINES: Record<Category, string> = {
   free_match: "PLAY FREE. WIN BIG.",
   classic_squad: "SQUAD UP. FIGHT TOGETHER. WIN TOGETHER.",
   lone_wolf: "ONE MAN. ONE MISSION.",
+  custom_rooms: "YOUR ROOM. YOUR RULES.",
+  weekly_rankings: "CLIMB. CONQUER. CLAIM REWARDS.",
 };
 
 const CardIcon = ({ category, color }: { category: Category; color: string }) => {
@@ -52,6 +58,10 @@ const CardIcon = ({ category, color }: { category: Category; color: string }) =>
       return <Swords className="h-10 w-10" style={style} />;
     case "lone_wolf":
       return <Swords className="h-10 w-10" style={style} />;
+    case "custom_rooms":
+      return <Hexagon className="h-10 w-10" style={style} />;
+    case "weekly_rankings":
+      return <Trophy className="h-10 w-10" style={style} />;
   }
 };
 

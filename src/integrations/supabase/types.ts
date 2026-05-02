@@ -528,6 +528,8 @@ export type Database = {
         | "battle_royale"
         | "classic_squad"
         | "lone_wolf"
+        | "custom_rooms"
+        | "weekly_rankings"
       tournament_status: "upcoming" | "live" | "completed" | "cancelled"
       wallet_request_status: "pending" | "approved" | "rejected"
       wallet_request_type: "add" | "withdraw"
@@ -667,6 +669,8 @@ export const Constants = {
         "battle_royale",
         "classic_squad",
         "lone_wolf",
+        "custom_rooms",
+        "weekly_rankings",
       ],
       tournament_status: ["upcoming", "live", "completed", "cancelled"],
       wallet_request_status: ["pending", "approved", "rejected"],
