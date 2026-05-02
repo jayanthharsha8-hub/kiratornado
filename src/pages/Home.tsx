@@ -12,27 +12,6 @@ import { Wallet, Menu } from "lucide-react";
 import { Particles } from "@/components/Particles";
 import { playSound } from "@/hooks/useSound";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
-import customRoomsImg from "@/assets/card-custom-rooms.jpg";
-import topRankersImg from "@/assets/card-top-rankers.jpg";
-
-const EXTRA_CARDS = [
-  {
-    key: "custom_rooms",
-    title: "Custom Rooms",
-    image: customRoomsImg,
-    color: "hsl(54 100% 55%)",
-    colorSoft: "hsl(54 100% 55% / 0.25)",
-    route: "/custom-rooms",
-  },
-  {
-    key: "weekly_rankings",
-    title: "Weekly Rankings",
-    image: topRankersImg,
-    color: "hsl(28 100% 55%)",
-    colorSoft: "hsl(28 100% 55% / 0.25)",
-    route: "/weekly-rankings",
-  },
-];
 
 type HomeBanner = { id: string; image_url: string | null; title: string; subtitle: string; button_text: string | null };
 type CategoryCardImage = { category: Category; card_image_url: string | null };
@@ -48,7 +27,7 @@ const Home = () => {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [homeBanners, setHomeBanners] = useState<HomeBanner[]>([]);
-  const [categoryImages, setCategoryImages] = useState<Record<Category, string | null>>({ free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null });
+  const [categoryImages, setCategoryImages] = useState<Record<Category, string | null>>({ free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null, custom_rooms: null, weekly_rankings: null });
 
   useEffect(() => {
     if (!user) return;
@@ -62,7 +41,7 @@ const Home = () => {
       db.from("category_card_images").select("category,card_image_url"),
     ]).then(([home, cards]) => {
       setHomeBanners((home.data ?? []) as HomeBanner[]);
-      const next = { free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null } as Record<Category, string | null>;
+      const next = { free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null, custom_rooms: null, weekly_rankings: null } as Record<Category, string | null>;
       ((cards.data ?? []) as CategoryCardImage[]).forEach((row) => { next[row.category] = row.card_image_url; });
       setCategoryImages(next);
     });
@@ -159,6 +138,7 @@ const Home = () => {
            <div className="grid grid-cols-2 gap-2">
             {(Object.keys(CATEGORY_META) as Category[]).map((c, idx) => {
               const meta = CATEGORY_META[c];
+              const fallbackImage = meta.image;
               return (
                 <button
                   key={c}
@@ -170,42 +150,17 @@ const Home = () => {
                     animationDelay: `${idx * 0.05}s`,
                   }}
                 >
-                  {categoryImages[c] ? (
-                    <img
-                      src={categoryImages[c]!}
-                      alt={meta.title}
-                      loading="lazy"
-                      width={512}
-                      height={512}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-card text-[10px] uppercase tracking-[0.22em] text-muted-foreground">No Banner</div>
-                  )}
+                  <img
+                    src={categoryImages[c] ?? fallbackImage}
+                    alt={meta.title}
+                    loading="lazy"
+                    width={512}
+                    height={512}
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                  />
                 </button>
               );
             })}
-            {EXTRA_CARDS.map((card, i) => (
-              <button
-                key={card.key}
-                onClick={() => { playSound("pulse"); navigate(card.route); }}
-                className="group relative aspect-square overflow-hidden rounded-sm border bg-card text-left transition-all duration-200 hover:scale-[1.01] active:scale-[0.98] animate-float-up"
-                style={{
-                  borderColor: card.color,
-                  boxShadow: `0 0 8px ${card.colorSoft}`,
-                  animationDelay: `${(4 + i) * 0.05}s`,
-                }}
-              >
-                <img
-                  src={card.image}
-                  alt={card.title}
-                  loading="lazy"
-                  width={512}
-                  height={512}
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                />
-              </button>
-            ))}
           </div>
         </SystemPanel>
 

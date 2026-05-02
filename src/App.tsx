@@ -20,8 +20,6 @@ import CategoryPage from "./pages/CategoryPage";
 import Leaderboard from "./pages/Leaderboard";
 import ProfilePage from "./pages/Profile";
 import Tournaments from "./pages/Tournaments";
-import CustomRooms from "./pages/CustomRooms";
-import WeeklyRankings from "./pages/WeeklyRankings";
 import WalletPage from "./pages/WalletPage";
 import WalletWithdraw from "./pages/WalletWithdraw";
 import WalletRedeem from "./pages/WalletRedeem";
@@ -62,8 +60,8 @@ const App = () => (
             <Route path="/tournament-slots/:id" element={<ProtectedRoute><TournamentSlots /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
             <Route path="/tournaments" element={<ProtectedRoute><Tournaments /></ProtectedRoute>} />
-            <Route path="/custom-rooms" element={<ProtectedRoute><CustomRooms /></ProtectedRoute>} />
-            <Route path="/weekly-rankings" element={<ProtectedRoute><WeeklyRankings /></ProtectedRoute>} />
+            <Route path="/custom-rooms" element={<ProtectedRoute><CategoryPage /></ProtectedRoute>} />
+            <Route path="/weekly-rankings" element={<ProtectedRoute><CategoryPage /></ProtectedRoute>} />
             <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
             <Route path="/wallet/withdraw" element={<ProtectedRoute><WalletWithdraw /></ProtectedRoute>} />
             <Route path="/wallet/redeem" element={<ProtectedRoute><WalletRedeem /></ProtectedRoute>} />
