@@ -91,7 +91,7 @@ const TournamentSlots = () => {
     : "SOLO";
 
   return (
-    <div className="relative min-h-screen bg-background pb-10 text-foreground">
+    <div className="relative min-h-screen bg-background pb-32 text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10 opacity-40"
         style={{ background: `radial-gradient(800px 400px at 50% -10%, ${accentSoft}, transparent 60%)` }} />
 
@@ -110,7 +110,7 @@ const TournamentSlots = () => {
         </div>
       </header>
 
-      <main className="mx-auto max-w-md space-y-5 px-4 pt-5">
+      <main className="mx-auto max-w-md space-y-5 px-4 pt-5 pb-4">
         {/* HEADER */}
         <div className="text-center">
           <p className="font-display text-[11px] font-bold uppercase tracking-[0.45em]" style={{ color: accent, textShadow: `0 0 10px ${accent}` }}>
@@ -186,20 +186,28 @@ const TournamentSlots = () => {
           </ul>
         </section>
 
-        {/* CONFIRM CTA */}
-        <button
-          onClick={confirmJoin}
-          disabled={!selectedSlot || joining || joined}
-          className="h-14 w-full rounded-xl font-display text-sm font-black uppercase tracking-[0.28em] transition active:scale-[0.98] disabled:opacity-40"
-          style={
-            selectedSlot && !joined
-              ? { background: `linear-gradient(135deg, ${accent}, ${accent}cc)`, color: "#0A0A0A", boxShadow: `0 8px 28px ${accent}77, 0 0 18px ${accent}` }
-              : { background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 100% / 0.4)", border: `1px solid ${accent}33` }
-          }
-        >
-          {joined ? "✓ Joined" : joining ? "Joining..." : selectedSlot ? `Confirm Join · Slot ${selectedSlot}` : "Select a Slot"}
-        </button>
       </main>
+
+      {/* STICKY CONFIRM CTA */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-white/5 bg-background/85 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur-md"
+        style={{ boxShadow: `0 -8px 24px ${accentSoft}` }}
+      >
+        <div className="mx-auto max-w-md">
+          <button
+            onClick={confirmJoin}
+            disabled={!selectedSlot || joining || joined}
+            className="h-14 w-full rounded-xl font-display text-sm font-black uppercase tracking-[0.28em] transition active:scale-[0.98] disabled:opacity-40"
+            style={
+              selectedSlot && !joined
+                ? { background: `linear-gradient(135deg, ${accent}, ${accent}cc)`, color: "#0A0A0A", boxShadow: `0 8px 28px ${accent}77, 0 0 18px ${accent}` }
+                : { background: "hsl(0 0% 100% / 0.04)", color: "hsl(0 0% 100% / 0.4)", border: `1px solid ${accent}33` }
+            }
+          >
+            {joined ? "✓ Joined" : joining ? "Joining..." : selectedSlot ? `Confirm Join · Slot ${selectedSlot}` : "Select a Slot"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

@@ -16,7 +16,7 @@ type TournamentBanner = { id: string; tournament_id: string; banner_image_url: s
 type TournamentPageBanner = { id: string; category: Category; banner_image_url: string | null };
 type TournamentRow = { id: string; title: string; category: Category; scheduled_at: string };
 
-const CATEGORIES: Category[] = ["free_match", "battle_royale", "classic_squad", "lone_wolf"];
+const CATEGORIES: Category[] = Object.keys(CATEGORY_META) as Category[];
 const db = supabase as any;
 
 const uploadBannerImage = async (file: File, folder: string) => {
@@ -48,13 +48,13 @@ export default function AdminBanners() {
       supabase.from("tournaments").select("id,title,category,scheduled_at").order("scheduled_at", { ascending: false }),
     ]);
     setHomeBanners((home.data ?? []) as HomeBanner[]);
-    const cardMap = { free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null } as Record<Category, string | null>;
+    const cardMap = CATEGORIES.reduce((acc, c) => { acc[c] = null; return acc; }, {} as Record<Category, string | null>);
     ((cards.data ?? []) as CategoryCardImage[]).forEach((row) => { cardMap[row.category] = row.card_image_url; });
     setCategoryImages(cardMap);
     const tournamentMap: Record<string, string | null> = {};
     ((banners.data ?? []) as TournamentBanner[]).forEach((row) => { tournamentMap[row.tournament_id] = row.banner_image_url; });
     setTournamentBanners(tournamentMap);
-    const pageMap = { free_match: null, battle_royale: null, classic_squad: null, lone_wolf: null } as Record<Category, string | null>;
+    const pageMap = CATEGORIES.reduce((acc, c) => { acc[c] = null; return acc; }, {} as Record<Category, string | null>);
     ((pageBannerRows.data ?? []) as TournamentPageBanner[]).forEach((row) => { pageMap[row.category] = row.banner_image_url; });
     setPageBanners(pageMap);
     setTournaments(((tours.data ?? []) as TournamentRow[]));
