@@ -2,8 +2,16 @@ import freeMatchImg from "@/assets/card-free-match.jpg";
 import battleRoyaleImg from "@/assets/card-battle-royale.jpg";
 import classicSquadImg from "@/assets/card-classic-squad.jpg";
 import loneWolfImg from "@/assets/card-lone-wolf.jpg";
+import customRoomsImg from "@/assets/card-custom-rooms.jpg";
+import weeklyRankingsImg from "@/assets/card-top-rankers.jpg";
 
-export type Category = "free_match" | "battle_royale" | "classic_squad" | "lone_wolf";
+export type Category =
+  | "free_match"
+  | "battle_royale"
+  | "classic_squad"
+  | "lone_wolf"
+  | "custom_rooms"
+  | "weekly_rankings";
 
 export type CategoryTheme = {
   title: string;
@@ -47,5 +55,21 @@ export const CATEGORY_META: Record<Category, CategoryTheme> = {
     color: "hsl(142 71% 45%)",
     colorSoft: "hsl(142 71% 45% / 0.2)",
     rules: ["Entry Fee: 10 coins", "Slots: 2 vs 2 (4 players total)"],
+  },
+  custom_rooms: {
+    title: "Custom Rooms",
+    subtitle: "Private -- Squad Up",
+    image: customRoomsImg,
+    color: "hsl(54 100% 55%)",
+    colorSoft: "hsl(54 100% 55% / 0.2)",
+    rules: ["Entry Fee: Custom", "Private rooms with your squad"],
+  },
+  weekly_rankings: {
+    title: "Weekly Rankings",
+    subtitle: "Weekly -- Top Rewards",
+    image: weeklyRankingsImg,
+    color: "hsl(28 100% 55%)",
+    colorSoft: "hsl(28 100% 55% / 0.2)",
+    rules: ["Compete weekly", "Top players win coin rewards"],
   },
 };
