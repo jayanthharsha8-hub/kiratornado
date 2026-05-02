@@ -22,15 +22,15 @@ const EXTRA_CARDS = [
     image: customRoomsImg,
     color: "hsl(54 100% 55%)",
     colorSoft: "hsl(54 100% 55% / 0.25)",
-    route: "/tournaments",
+    route: "/custom-rooms",
   },
   {
-    key: "top_rankers",
-    title: "Top Rankers",
+    key: "weekly_rankings",
+    title: "Weekly Rankings",
     image: topRankersImg,
     color: "hsl(28 100% 55%)",
     colorSoft: "hsl(28 100% 55% / 0.25)",
-    route: "/leaderboard",
+    route: "/weekly-rankings",
   },
 ];
 
